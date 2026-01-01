@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FantaUtenti - Server</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; padding:10px; min-height:100vh; }
+    .container { max-width:800px; margin:0 auto; background:rgba(0,0,0,0.85); padding:20px; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.6); }
+    h1, h2 { text-align:center; color:#4fc3f7; margin:15px 0; }
+    .form-group { margin:12px 0; }
+    label { display:block; margin:6px 0 4px; font-weight:bold; }
+    input { width:100%; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:white; }
+    input::placeholder { color:#aaa; }
+    button { width:100%; padding:12px; background:#2196f3; color:white; font-weight:bold; border:none; border-radius:6px; cursor:pointer; margin:10px 0; }
+    button:hover { background:#0d8bd9; }
+    .error { color:#ff6b6b; text-align:center; margin:10px 0; }
+    .nav-tabs { display:flex; justify-content:center; gap:10px; margin:20px 0; flex-wrap:wrap; }
+    .nav-tabs button { width:auto; padding:8px 16px; background:#333; margin:0; }
+    .nav-tabs button.active { background:#2196f3; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .leaderboard-item { display:flex; justify-content:space-between; padding:12px; margin:8px 0; background:rgba(255,255,255,0.1); border-radius:8px; align-items:center; }
+    .avatar { width:40px; height:40px; border-radius:50%; background:#555; display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:10px; }
+    .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+    .user-info { display:flex; align-items:center; }
+    .logout-btn { background:#f44336; margin-top:20px; }
+    .logout-btn:hover { background:#d32f2f; }
+    .rules ul { padding-left:20px; margin:15px 0; }
+    .rules li { margin:8px 0; }
+    .preview { width:100px; height:100px; border-radius:50%; margin:10px auto; background:#444; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .preview img { width:100%; height:100%; object-fit:cover; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Schermata Autenticazione -->
+    <div id="authScreen">
+      <h1>🎮 FantaUtenti</h1>
+      <p style="text-align:center;">Il fantacalcio dove **tu** sei il giocatore!</p>
+
+      <div id="loginForm">
+        <h2>Accedi</h2>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUser" placeholder="Il tuo username" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="La tua password" />
+        </div>
+        <button onclick="login()">Accedi</button>
+        <p style="text-align:center; margin-top:10px;">
+          Non hai un account? <a href="#" onclick="showAuth('register')" style="color:#4fc3f7;">Registrati</a>
+        </p>
+        <div id="loginError" class="error"></div>
+      </div>
+
+      <div id="registerForm" style="display:none;">
+        <h2>Registrati</h2>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="regUser" placeholder="Scegli username unico" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Minimo 6 caratteri" />
+        </div>
+        <div class="form-group">
+          <label>Conferma Password</label>
+          <input type="password" id="regPass2" placeholder="Ripeti password" />
+        </div>
+        <button onclick="register()">Registrati</button>
+        <p style="text-align:center; margin-top:10px;">
+          Hai già un account? <a href="#" onclick="showAuth('login')" style="color:#4fc3f7;">Accedi</a>
+        </p>
+        <div id="regError" class="error"></div>
+      </div>
+    </div>
+
+    <!-- App Principale -->
+    <div id="appScreen" style="display:none;">
+      <h1>Benvenuto, <span id="currentUser"></span>!</h1>
+
+      <div class="nav-tabs">
+        <button onclick="showTab('leaderboard')" id="tab-leaderboard">Classifica</button>
+        <button onclick="showTab('rules')" id="tab-rules">Regole</button>
+        <button onclick="showTab('settings')" id="tab-settings">Impostazioni</button>
+      </div>
+
+      <div id="leaderboard" class="tab-content active">
+        <h2>🏆 Classifica Generale</h2>
+        <div id="leaderboardList"></div>
+      </div>
+
+      <div id="rules" class="tab-content">
+        <h2>📜 Regolamento</h2>
+        <div class="rules">
+          <p>Ogni utente registrato è un giocatore attivo. I punti sono salvati su server Firebase.</p>
+          <ul>
+            <li><strong>+20 punti</strong> alla registrazione</li>
+            <li><strong>+10 punti</strong> per ogni login (max 1 volta al giorno)</li>
+            <li><strong>+5 punti</strong> per aver caricato una foto profilo</li>
+          </ul>
+          <p>La classifica è in tempo reale e visibile a tutti!</p>
+        </div>
+      </div>
+
+      <div id="settings" class="tab-content">
+        <h2>⚙️ Impostazioni Profilo</h2>
+        <div class="form-group">
+          <label>Nuova Password</label>
+          <input type="password" id="newPassword" placeholder="Lascia vuoto per non cambiare" />
+        </div>
+        <div class="form-group">
+          <label>Conferma Nuova Password</label>
+          <input type="password" id="newPassword2" placeholder="Ripeti la nuova password" />
+        </div>
+        <div class="form-group">
+          <label>Foto Profilo</label>
+          <input type="file" id="profilePic" accept="image/*" onchange="previewImage(event)" />
+          <div class="preview" id="previewContainer">
+            <span>?</span>
+          </div>
+        </div>
+        <button onclick="saveSettings()">Salva Impostazioni</button>
+        <div id="settingsError" class="error"></div>
+      </div>
+
+      <button class="logout-btn" onclick="logout()">Esci</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (Compat Mode - per HTML puro) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // 🔑 Configurazione Firebase — già inserita con i tuoi dati
+    const firebaseConfig = {
+      apiKey: "AIzaSyBCp4I-yA-1BhPgr5VU1dVioL4Uel1X8vE",
+      authDomain: "fantautenti.firebaseapp.com",
+      projectId: "fantautenti",
+      storageBucket: "fantautenti.firebasestorage.app",
+      messagingSenderId: "994276464470",
+      appId: "1:994276464470:web:801f878675e486706528f7",
+      measurementId: "G-9W1ZEE5C4R"
+    };
+
+    // Inizializza Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ======================
+    // Funzioni di autenticazione
+    // ======================
+    function showAuth(type) {
+      document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
+    }
+
+    async function register() {
+      const username = document.getElementById('regUser').value.trim();
+      const pass = document.getElementById('regPass').value;
+      const pass2 = document.getElementById('regPass2').value;
+      const err = document.getElementById('regError');
+      err.textContent = '';
+
+      if (!username || !pass || !pass2) {
+        err.textContent = 'Tutti i campi sono obbligatori.';
+        return;
+      }
+      if (pass.length < 6) {
+        err.textContent = 'La password deve avere almeno 6 caratteri.';
+        return;
+      }
+      if (pass !== pass2) {
+        err.textContent = 'Le password non coincidono.';
+        return;
+      }
+
+      try {
+        // Usiamo una email fittizia basata sullo username
+        const email = username + '@fantautenti.fake';
+        const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+        const user = userCredential.user;
+
+        // Salva dati utente in Firestore
+        await db.collection('users').doc(user.uid).set({
+          username: username,
+          points: 20, // bonus registrazione
+          profilePic: null,
+          lastLogin: null
+        });
+
+        alert('✅ Registrazione completata! Ora puoi accedere.');
+        showAuth('login');
+      } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+          err.textContent = '❌ Username già in uso.';
+        } else {
+          err.textContent = 'Errore: ' + (error.message || error.code);
+        }
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      const err = document.getElementById('loginError');
+      err.textContent = '';
+
+      if (!username || !pass) {
+        err.textContent = 'Inserisci username e password.';
+        return;
+      }
+
+      try {
+        const email = username + '@fantautenti.fake';
+        const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+        const user = userCredential.user;
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data();
+
+        // Aggiorna punti se primo login oggi
+        const today = new Date().toDateString();
+        if (userData.lastLogin !== today) {
+          await db.collection('users').doc(user.uid).update({
+            points: firebase.firestore.FieldValue.increment(10),
+            lastLogin: today
+          });
+        }
+
+        loadApp(user.uid, userData.username);
+      } catch (error) {
+        err.textContent = 'Username o password errati.';
+      }
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        document.getElementById('appScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'block';
+        showAuth('login');
+        // Reset campi
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+      });
+    }
+
+    // ======================
+    // App principale
+    // ======================
+    let currentUid = null;
+    let currentUsername = null;
+
+    function loadApp(uid, username) {
+      currentUid = uid;
+      currentUsername = username;
+      document.getElementById('currentUser').textContent = username;
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'block';
+      renderLeaderboard();
+      showTab('leaderboard');
+    }
+
+    async function renderLeaderboard() {
+      const snapshot = await db.collection('users').orderBy('points', 'desc').get();
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = '';
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const isCurrent = doc.id === currentUid;
+        const avatar = data.profilePic 
+          ? `<img src="${data.profilePic}" alt="Avatar">`
+          : `<span>${data.username.charAt(0).toUpperCase()}</span>`;
+
+        const item = document.createElement('div');
+        item.className = 'leaderboard-item';
+        item.innerHTML = `
+          <div class="user-info">
+            <div class="avatar">${avatar}</div>
+            <strong>${data.username} ${isCurrent ? '(Tu)' : ''}</strong>
+          </div>
+          <div><strong>${data.points}</strong> punti</div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // ======================
+    // Impostazioni
+    // ======================
+    function previewImage(event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById('previewContainer');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = `<img src="${e.target.result}" alt="Anteprima">`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.innerHTML = `<span>${currentUsername ? currentUsername.charAt(0).toUpperCase() : '?'}</span>`;
+      }
+    }
+
+    async function saveSettings() {
+      const newPassword = document.getElementById('newPassword').value;
+      const newPassword2 = document.getElementById('newPassword2').value;
+      const fileInput = document.getElementById('profilePic');
+      const err = document.getElementById('settingsError');
+      err.textContent = '';
+
+      try {
+        // Cambio password
+        if (newPassword) {
+          if (newPassword.length < 6) {
+            err.textContent = 'La password deve avere almeno 6 caratteri.';
+            return;
+          }
+          if (newPassword !== newPassword2) {
+            err.textContent = 'Le nuove password non coincidono.';
+            return;
+          }
+          const user = auth.currentUser;
+          await user.updatePassword(newPassword);
+        }
+
+        // Caricamento foto
+        const file = fileInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = async function(e) {
+            const base64 = e.target.result;
+            const userRef = db.collection('users').doc(currentUid);
+            const userData = (await userRef.get()).data();
+
+            let pointsToAdd = 0;
+            if (!userData.profilePic) {
+              pointsToAdd = 5; // bonus primo upload
+            }
+
+            await userRef.update({
+              profilePic: base64,
+              points: firebase.firestore.FieldValue.increment(pointsToAdd)
+            });
+
+            renderLeaderboard();
+            alert('✅ Impostazioni e foto salvate!');
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        alert('✅ Impostazioni salvate!');
+      } catch (error) {
+        err.textContent = 'Errore: ' + (error.message || error.code);
+      }
+    }
+
+    // ======================
+    // Tabs
+    // ======================
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // Listener per autenticazione persistente
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          const data = userDoc.data();
+          loadApp(user.uid, data.username);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
