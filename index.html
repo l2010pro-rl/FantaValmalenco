@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FantaValmalenco - Accedi</title>
+  <title>FantaValmalenco - Statistiche</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; padding:10px; min-height:100vh; }
@@ -38,6 +38,10 @@
     .rules li { margin:8px 0; }
     .preview { width:100px; height:100px; border-radius:50%; margin:10px auto; background:#444; display:flex; align-items:center; justify-content:center; overflow:hidden; }
     .preview img { width:100%; height:100%; object-fit:cover; }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -45,9 +49,8 @@
     <!-- Schermata Autenticazione -->
     <div id="authScreen">
       <h1>🎮 FantaValmalenco</h1>
-      <p style="text-align:center;">Accedi con email o Google!</p>
+      <p style="text-align:center;">Inserisci le tue statistiche e scala la classifica!</p>
 
-      <!-- Login Email -->
       <div id="loginForm">
         <h2>Accedi con Email</h2>
         <div class="form-group">
@@ -65,7 +68,6 @@
         <div id="loginError" class="error"></div>
       </div>
 
-      <!-- Pulsante Google -->
       <button class="google-btn" onclick="loginGoogle()">
         <svg width="20" height="20" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
           <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 34.944-56.639 34.944-97.93z" fill="#4285F4"/>
@@ -76,7 +78,6 @@
         Accedi con Google
       </button>
 
-      <!-- Registrazione -->
       <div id="registerForm" style="display:none;">
         <h2>Registrati</h2>
         <div class="form-group">
@@ -106,26 +107,67 @@
       <div class="nav-tabs">
         <button onclick="showTab('leaderboard')" id="tab-leaderboard">Classifica</button>
         <button onclick="showTab('rules')" id="tab-rules">Regole</button>
+        <button onclick="showTab('stats')" id="tab-stats">Le mie statistiche</button>
         <button onclick="showTab('settings')" id="tab-settings">Impostazioni</button>
       </div>
 
+      <!-- Classifica -->
       <div id="leaderboard" class="tab-content active">
         <h2>🏆 Classifica Generale</h2>
         <div id="leaderboardList"></div>
       </div>
 
+      <!-- Regole -->
       <div id="rules" class="tab-content">
-        <h2>📜 Regolamento</h2>
+        <h2>📜 Regolamento Punti</h2>
         <div class="rules">
-          <p>Ogni utente è un giocatore attivo. I punti sono salvati su server Firebase.</p>
           <ul>
-            <li><strong>+20 punti</strong> alla registrazione</li>
-            <li><strong>+10 punti</strong> per ogni login (max 1 volta al giorno)</li>
-            <li><strong>+5 punti</strong> per aver caricato una foto profilo</li>
+            <li><strong>Gol</strong>: +2 punti</li>
+            <li><strong>Assist</strong>: +1 punto</li>
+            <li><strong>Vittoria</strong>: +1 punto</li>
+            <li><strong>Gol subito</strong>: -1 punto</li>
+            <li><strong>Rigore sbagliato</strong>: -1 punto</li>
+            <li><strong>Rigore segnato</strong>: +1 punto</li>
           </ul>
+          <p>Inserisci le tue statistiche nella sezione "Le mie statistiche".</p>
         </div>
       </div>
 
+      <!-- Statistiche -->
+      <div id="stats" class="tab-content">
+        <h2>📊 Le mie statistiche</h2>
+        <div class="stats-grid">
+          <div class="form-group">
+            <label>Gol</label>
+            <input type="number" id="statGol" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Assist</label>
+            <input type="number" id="statAssist" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Vittorie</label>
+            <input type="number" id="statWin" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Gol subiti</label>
+            <input type="number" id="statGolSubiti" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Rigori segnati</label>
+            <input type="number" id="statRigSegnati" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Rigori sbagliati</label>
+            <input type="number" id="statRigSbagliati" min="0" value="0" />
+          </div>
+        </div>
+        <button onclick="saveStats()">Salva Statistiche</button>
+        <div id="statsError" class="error"></div>
+        <div id="totalPoints" style="text-align:center; margin-top:15px; font-size:18px;"></div>
+      </div>
+
+      <!-- Impostazioni -->
       <div id="settings" class="tab-content">
         <h2>⚙️ Impostazioni Profilo</h2>
         <div class="form-group">
@@ -157,15 +199,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // 🔑 Configurazione Firebase (già con i tuoi dati)
+    // 🔑 Configurazione Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBCp4I-yA-1BhPgr5VU1dVioL4Uel1X8vE",
       authDomain: "fantautenti.firebaseapp.com",
       projectId: "fantautenti",
       storageBucket: "fantautenti.firebasestorage.app",
       messagingSenderId: "994276464470",
-      appId: "1:994276464470:web:801f878675e486706528f7",
-      measurementId: "G-9W1ZEE5C4R"
+      appId: "1:994276464470:web:801f878675e486706528f7"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -173,11 +214,22 @@
     const db = firebase.firestore();
 
     // ======================
-    // Autenticazione Email
+    // Autenticazione
     // ======================
     function showAuth(type) {
       document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
       document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
+    }
+
+    function calculatePoints(stats) {
+      return (
+        (stats.gol || 0) * 2 +
+        (stats.assist || 0) * 1 +
+        (stats.win || 0) * 1 +
+        (stats.golSubiti || 0) * (-1) +
+        (stats.rigSbagliati || 0) * (-1) +
+        (stats.rigSegnati || 0) * 1
+      );
     }
 
     async function register() {
@@ -203,7 +255,18 @@
       try {
         const email = username + '@fantautenti.fake';
         const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-        await saveUserToFirestore(userCredential.user, username);
+        await db.collection('users').doc(userCredential.user.uid).set({
+          username: username,
+          profilePic: null,
+          stats: {
+            gol: 0,
+            assist: 0,
+            win: 0,
+            golSubiti: 0,
+            rigSegnati: 0,
+            rigSbagliati: 0
+          }
+        });
         alert('✅ Registrazione completata!');
         showAuth('login');
       } catch (error) {
@@ -229,20 +292,45 @@
       try {
         const email = username + '@fantautenti.fake';
         const userCredential = await auth.signInWithEmailAndPassword(email, pass);
-        await updateLoginAndLoad(userCredential.user);
+        loadAppData(userCredential.user);
       } catch (error) {
         err.textContent = 'Username o password errati.';
       }
     }
 
-    // ======================
-    // Login con Google
-    // ======================
     async function loginGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         const userCredential = await auth.signInWithPopup(provider);
-        await updateLoginAndLoad(userCredential.user);
+        const user = userCredential.user;
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+          const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
+          let username = baseUsername;
+          let counter = 1;
+          let exists = true;
+          while (exists) {
+            const snapshot = await db.collection('users').where('username', '==', username).get();
+            exists = !snapshot.empty;
+            if (exists) {
+              username = baseUsername + counter;
+              counter++;
+            }
+          }
+          await db.collection('users').doc(user.uid).set({
+            username: username,
+            profilePic: user.photoURL || null,
+            stats: {
+              gol: 0,
+              assist: 0,
+              win: 0,
+              golSubiti: 0,
+              rigSegnati: 0,
+              rigSbagliati: 0
+            }
+          });
+        }
+        loadAppData(user);
       } catch (error) {
         if (error.code !== 'auth/popup-closed-by-user') {
           alert('Errore Google: ' + error.message);
@@ -250,101 +338,118 @@
       }
     }
 
-    // ======================
-    // Gestione utente Firestore
-    // ======================
-    async function saveUserToFirestore(user, username) {
-      await db.collection('users').doc(user.uid).set({
-        username: username,
-        points: 20,
-        profilePic: user.photoURL || null,
-        lastLogin: null
-      });
-    }
-
-    async function updateLoginAndLoad(user) {
-      let userData = null;
+    async function loadAppData(user) {
       const userDoc = await db.collection('users').doc(user.uid).get();
-
-      if (!userDoc.exists) {
-        // Nuovo utente Google: crea username da nome
-        const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
-        let username = baseUsername;
-        let counter = 1;
-        let exists = true;
-        while (exists) {
-          const snapshot = await db.collection('users').where('username', '==', username).get();
-          exists = !snapshot.empty;
-          if (exists) {
-            username = baseUsername + counter;
-            counter++;
-          }
-        }
-        await saveUserToFirestore(user, username);
-        userData = { username, points: 20, profilePic: user.photoURL || null, lastLogin: null };
-      } else {
-        userData = userDoc.data();
-        const today = new Date().toDateString();
-        if (userData.lastLogin !== today) {
-          await db.collection('users').doc(user.uid).update({
-            points: firebase.firestore.FieldValue.increment(10),
-            lastLogin: today
-          });
-          userData.points += 10;
-          userData.lastLogin = today;
-        }
-      }
-
-      loadApp(user.uid, userData.username, userData.profilePic);
-    }
-
-    // ======================
-    // App principale
-    // ======================
-    let currentUid = null;
-    let currentUsername = null;
-
-    function loadApp(uid, username, photoURL) {
-      currentUid = uid;
-      currentUsername = username;
-      document.getElementById('currentUser').textContent = username;
+      const data = userDoc.data();
+      currentUid = user.uid;
+      currentUsername = data.username;
+      document.getElementById('currentUser').textContent = data.username;
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
       renderLeaderboard();
       showTab('leaderboard');
 
-      // Mostra foto in anteprima
+      // Mostra foto
       const preview = document.getElementById('previewContainer');
-      if (photoURL) {
-        preview.innerHTML = `<img src="${photoURL}" alt="Avatar">`;
+      if (data.profilePic) {
+        preview.innerHTML = `<img src="${data.profilePic}" alt="Avatar">`;
       } else {
-        preview.innerHTML = `<span>${username.charAt(0).toUpperCase()}</span>`;
+        preview.innerHTML = `<span>${data.username.charAt(0).toUpperCase()}</span>`;
       }
     }
 
     async function renderLeaderboard() {
-      const snapshot = await db.collection('users').orderBy('points', 'desc').get();
+      const snapshot = await db.collection('users').get();
+      const users = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const points = calculatePoints(data.stats);
+        users.push({ ...data, uid: doc.id, points });
+      });
+      users.sort((a, b) => b.points - a.points);
+
       const list = document.getElementById('leaderboardList');
       list.innerHTML = '';
-
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const isCurrent = doc.id === currentUid;
-        const avatar = data.profilePic 
-          ? `<img src="${data.profilePic}" alt="Avatar">`
-          : `<span>${data.username.charAt(0).toUpperCase()}</span>`;
+      users.forEach(user => {
+        const isCurrent = user.uid === currentUid;
+        const avatar = user.profilePic 
+          ? `<img src="${user.profilePic}" alt="Avatar">`
+          : `<span>${user.username.charAt(0).toUpperCase()}</span>`;
 
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
         item.innerHTML = `
           <div class="user-info">
             <div class="avatar">${avatar}</div>
-            <strong>${data.username} ${isCurrent ? '(Tu)' : ''}</strong>
+            <strong>${user.username} ${isCurrent ? '(Tu)' : ''}</strong>
           </div>
-          <div><strong>${data.points}</strong> punti</div>
+          <div><strong>${user.points}</strong> punti</div>
         `;
         list.appendChild(item);
       });
+    }
+
+    // ======================
+    // Statistiche
+    // ======================
+    let currentUid = null;
+    let currentUsername = null;
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+
+      if (tabId === 'stats') {
+        loadStats();
+      }
+    }
+
+    async function loadStats() {
+      const userDoc = await db.collection('users').doc(currentUid).get();
+      const data = userDoc.data();
+      const s = data.stats || {};
+      document.getElementById('statGol').value = s.gol || 0;
+      document.getElementById('statAssist').value = s.assist || 0;
+      document.getElementById('statWin').value = s.win || 0;
+      document.getElementById('statGolSubiti').value = s.golSubiti || 0;
+      document.getElementById('statRigSegnati').value = s.rigSegnati || 0;
+      document.getElementById('statRigSbagliati').value = s.rigSbagliati || 0;
+      updateTotalPoints();
+    }
+
+    function updateTotalPoints() {
+      const stats = {
+        gol: parseInt(document.getElementById('statGol').value) || 0,
+        assist: parseInt(document.getElementById('statAssist').value) || 0,
+        win: parseInt(document.getElementById('statWin').value) || 0,
+        golSubiti: parseInt(document.getElementById('statGolSubiti').value) || 0,
+        rigSegnati: parseInt(document.getElementById('statRigSegnati').value) || 0,
+        rigSbagliati: parseInt(document.getElementById('statRigSbagliati').value) || 0
+      };
+      const points = calculatePoints(stats);
+      document.getElementById('totalPoints').textContent = `Punti totali: ${points}`;
+    }
+
+    async function saveStats() {
+      const stats = {
+        gol: parseInt(document.getElementById('statGol').value) || 0,
+        assist: parseInt(document.getElementById('statAssist').value) || 0,
+        win: parseInt(document.getElementById('statWin').value) || 0,
+        golSubiti: parseInt(document.getElementById('statGolSubiti').value) || 0,
+        rigSegnati: parseInt(document.getElementById('statRigSegnati').value) || 0,
+        rigSbagliati: parseInt(document.getElementById('statRigSbagliati').value) || 0
+      };
+
+      try {
+        await db.collection('users').doc(currentUid).update({ stats: stats });
+        alert('✅ Statistiche salvate!');
+        renderLeaderboard();
+        updateTotalPoints();
+      } catch (error) {
+        document.getElementById('statsError').textContent = 'Errore: ' + error.message;
+      }
     }
 
     // ======================
@@ -357,6 +462,8 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           preview.innerHTML = `<img src="${e.target.result}" alt="Anteprima">`;
+          // Salva subito la foto
+          db.collection('users').doc(currentUid).update({ profilePic: e.target.result });
         };
         reader.readAsDataURL(file);
       }
@@ -365,7 +472,6 @@
     async function saveSettings() {
       const newPassword = document.getElementById('newPassword').value;
       const newPassword2 = document.getElementById('newPassword2').value;
-      const fileInput = document.getElementById('profilePic');
       const err = document.getElementById('settingsError');
       err.textContent = '';
 
@@ -382,36 +488,12 @@
           const user = auth.currentUser;
           if (user.email.endsWith('@fantautenti.fake')) {
             await user.updatePassword(newPassword);
+            // Aggiorna anche in Firestore se necessario
           } else {
             err.textContent = 'Non puoi cambiare la password con un account Google.';
             return;
           }
         }
-
-        const file = fileInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = async function(e) {
-            const base64 = e.target.result;
-            const userRef = db.collection('users').doc(currentUid);
-            const userData = (await userRef.get()).data();
-
-            let pointsToAdd = 0;
-            if (!userData.profilePic?.startsWith('http')) {
-              pointsToAdd = 5;
-            }
-
-            await userRef.update({
-              profilePic: base64,
-              points: firebase.firestore.FieldValue.increment(pointsToAdd)
-            });
-
-            renderLeader;
-          };
-          reader.readAsDataURL(file);
-          return;
-        }
-
         alert('✅ Impostazioni salvate!');
       } catch (error) {
         err.textContent = 'Errore: ' + (error.message || error.code);
@@ -428,28 +510,45 @@
       });
     }
 
-    // ======================
-    // Tabs
-    // ======================
-    function showTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      document.getElementById('tab-' + tabId).classList.add('active');
-    }
-
-    // Listener persistente
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDoc = await db.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
-          const data = userDoc.data();
-          loadApp(user.uid, data.username, data.profilePic);
+          loadAppData(user);
         } else {
-          // Utente nuovo (es. Google mai visto)
-          await updateLoginAndLoad(user);
+          // Dovrebbe già essere gestito, ma per sicurezza
+          const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
+          let username = baseUsername;
+          let counter = 1;
+          let exists = true;
+          while (exists) {
+            const snapshot = await db.collection('users').where('username', '==', username).get();
+            exists = !snapshot.empty;
+            if (exists) {
+              username = baseUsername + counter;
+              counter++;
+            }
+          }
+          await db.collection('users').doc(user.uid).set({
+            username: username,
+            profilePic: user.photoURL || null,
+            stats: {
+              gol: 0,
+              assist: 0,
+              win: 0,
+              golSubiti: 0,
+              rigSegnati: 0,
+              rigSbagliati: 0
+            }
+          });
+          loadAppData(user);
         }
       }
+    });
+
+    // Aggiorna punti totali in tempo reale
+    document.querySelectorAll('#stats input').forEach(input => {
+      input.addEventListener('input', updateTotalPoints);
     });
   </script>
 </body>
