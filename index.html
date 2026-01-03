@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FantaUtenti - Server</title>
+  <title>FantaValmalenco - Accedi</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; padding:10px; min-height:100vh; }
@@ -14,7 +14,14 @@
     input { width:100%; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:white; }
     input::placeholder { color:#aaa; }
     button { width:100%; padding:12px; background:#2196f3; color:white; font-weight:bold; border:none; border-radius:6px; cursor:pointer; margin:10px 0; }
-    button:hover { background:#0d8bd9; }
+    .google-btn {
+      background: #4285F4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .google-btn:hover { background: #3367D6; }
     .error { color:#ff6b6b; text-align:center; margin:10px 0; }
     .nav-tabs { display:flex; justify-content:center; gap:10px; margin:20px 0; flex-wrap:wrap; }
     .nav-tabs button { width:auto; padding:8px 16px; background:#333; margin:0; }
@@ -37,11 +44,12 @@
   <div class="container">
     <!-- Schermata Autenticazione -->
     <div id="authScreen">
-      <h1>🎮 FantaUtenti</h1>
-      <p style="text-align:center;">Il fantacalcio dove **tu** sei il giocatore!</p>
+      <h1>🎮 FantaValmalenco</h1>
+      <p style="text-align:center;">Accedi con email o Google!</p>
 
+      <!-- Login Email -->
       <div id="loginForm">
-        <h2>Accedi</h2>
+        <h2>Accedi con Email</h2>
         <div class="form-group">
           <label>Username</label>
           <input type="text" id="loginUser" placeholder="Il tuo username" />
@@ -50,13 +58,25 @@
           <label>Password</label>
           <input type="password" id="loginPass" placeholder="La tua password" />
         </div>
-        <button onclick="login()">Accedi</button>
-        <p style="text-align:center; margin-top:10px;">
+        <button onclick="loginEmail()">Accedi</button>
+        <p style="text-align:center; margin:10px 0;">
           Non hai un account? <a href="#" onclick="showAuth('register')" style="color:#4fc3f7;">Registrati</a>
         </p>
         <div id="loginError" class="error"></div>
       </div>
 
+      <!-- Pulsante Google -->
+      <button class="google-btn" onclick="loginGoogle()">
+        <svg width="20" height="20" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
+          <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 34.944-56.639 34.944-97.93z" fill="#4285F4"/>
+          <path d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.053-45.257 13.053-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1z" fill="#34A853"/>
+          <path d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.01 89.644 0 109.517 0 130.55s5.01 40.905 13.94 58.602l42.341-32.782z" fill="#FBBC05"/>
+          <path d="M130.55 50.479c24.513 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.944 165.798 0 130.55 0 79.49 0 35.393 29.301 13.94 50.76l42.341 32.782c10.873-33.37 42.378-57.871 76.27-57.871z" fill="#EA4335"/>
+        </svg>
+        Accedi con Google
+      </button>
+
+      <!-- Registrazione -->
       <div id="registerForm" style="display:none;">
         <h2>Registrati</h2>
         <div class="form-group">
@@ -97,13 +117,12 @@
       <div id="rules" class="tab-content">
         <h2>📜 Regolamento</h2>
         <div class="rules">
-          <p>Ogni utente registrato è un giocatore attivo. I punti sono salvati su server Firebase.</p>
+          <p>Ogni utente è un giocatore attivo. I punti sono salvati su server Firebase.</p>
           <ul>
             <li><strong>+20 punti</strong> alla registrazione</li>
             <li><strong>+10 punti</strong> per ogni login (max 1 volta al giorno)</li>
             <li><strong>+5 punti</strong> per aver caricato una foto profilo</li>
           </ul>
-          <p>La classifica è in tempo reale e visibile a tutti!</p>
         </div>
       </div>
 
@@ -132,13 +151,13 @@
     </div>
   </div>
 
-  <!-- Firebase SDK (Compat Mode - per HTML puro) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // 🔑 Configurazione Firebase — già inserita con i tuoi dati
+    // 🔑 Configurazione Firebase (già con i tuoi dati)
     const firebaseConfig = {
       apiKey: "AIzaSyBCp4I-yA-1BhPgr5VU1dVioL4Uel1X8vE",
       authDomain: "fantautenti.firebaseapp.com",
@@ -149,13 +168,12 @@
       measurementId: "G-9W1ZEE5C4R"
     };
 
-    // Inizializza Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
     // ======================
-    // Funzioni di autenticazione
+    // Autenticazione Email
     // ======================
     function showAuth(type) {
       document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
@@ -183,20 +201,10 @@
       }
 
       try {
-        // Usiamo una email fittizia basata sullo username
         const email = username + '@fantautenti.fake';
         const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-        const user = userCredential.user;
-
-        // Salva dati utente in Firestore
-        await db.collection('users').doc(user.uid).set({
-          username: username,
-          points: 20, // bonus registrazione
-          profilePic: null,
-          lastLogin: null
-        });
-
-        alert('✅ Registrazione completata! Ora puoi accedere.');
+        await saveUserToFirestore(userCredential.user, username);
+        alert('✅ Registrazione completata!');
         showAuth('login');
       } catch (error) {
         if (error.code === 'auth/email-already-in-use') {
@@ -207,7 +215,7 @@
       }
     }
 
-    async function login() {
+    async function loginEmail() {
       const username = document.getElementById('loginUser').value.trim();
       const pass = document.getElementById('loginPass').value;
       const err = document.getElementById('loginError');
@@ -221,34 +229,73 @@
       try {
         const email = username + '@fantautenti.fake';
         const userCredential = await auth.signInWithEmailAndPassword(email, pass);
-        const user = userCredential.user;
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        const userData = userDoc.data();
+        await updateLoginAndLoad(userCredential.user);
+      } catch (error) {
+        err.textContent = 'Username o password errati.';
+      }
+    }
 
-        // Aggiorna punti se primo login oggi
+    // ======================
+    // Login con Google
+    // ======================
+    async function loginGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const userCredential = await auth.signInWithPopup(provider);
+        await updateLoginAndLoad(userCredential.user);
+      } catch (error) {
+        if (error.code !== 'auth/popup-closed-by-user') {
+          alert('Errore Google: ' + error.message);
+        }
+      }
+    }
+
+    // ======================
+    // Gestione utente Firestore
+    // ======================
+    async function saveUserToFirestore(user, username) {
+      await db.collection('users').doc(user.uid).set({
+        username: username,
+        points: 20,
+        profilePic: user.photoURL || null,
+        lastLogin: null
+      });
+    }
+
+    async function updateLoginAndLoad(user) {
+      let userData = null;
+      const userDoc = await db.collection('users').doc(user.uid).get();
+
+      if (!userDoc.exists) {
+        // Nuovo utente Google: crea username da nome
+        const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
+        let username = baseUsername;
+        let counter = 1;
+        let exists = true;
+        while (exists) {
+          const snapshot = await db.collection('users').where('username', '==', username).get();
+          exists = !snapshot.empty;
+          if (exists) {
+            username = baseUsername + counter;
+            counter++;
+          }
+        }
+        await saveUserToFirestore(user, username);
+        userData = { username, points: 20, profilePic: user.photoURL || null, lastLogin: null };
+      } else {
+        userData = userDoc.data();
         const today = new Date().toDateString();
         if (userData.lastLogin !== today) {
           await db.collection('users').doc(user.uid).update({
             points: firebase.firestore.FieldValue.increment(10),
             lastLogin: today
           });
+          userData.points += 10;
+          userData.lastLogin = today;
         }
-
-        loadApp(user.uid, userData.username);
-      } catch (error) {
-        err.textContent = 'Username o password errati.';
       }
-    }
 
-    function logout() {
-      auth.signOut().then(() => {
-        document.getElementById('appScreen').style.display = 'none';
-        document.getElementById('authScreen').style.display = 'block';
-        showAuth('login');
-        // Reset campi
-        document.getElementById('loginUser').value = '';
-        document.getElementById('loginPass').value = '';
-      });
+      loadApp(user.uid, userData.username, userData.profilePic);
     }
 
     // ======================
@@ -257,7 +304,7 @@
     let currentUid = null;
     let currentUsername = null;
 
-    function loadApp(uid, username) {
+    function loadApp(uid, username, photoURL) {
       currentUid = uid;
       currentUsername = username;
       document.getElementById('currentUser').textContent = username;
@@ -265,6 +312,14 @@
       document.getElementById('appScreen').style.display = 'block';
       renderLeaderboard();
       showTab('leaderboard');
+
+      // Mostra foto in anteprima
+      const preview = document.getElementById('previewContainer');
+      if (photoURL) {
+        preview.innerHTML = `<img src="${photoURL}" alt="Avatar">`;
+      } else {
+        preview.innerHTML = `<span>${username.charAt(0).toUpperCase()}</span>`;
+      }
     }
 
     async function renderLeaderboard() {
@@ -304,8 +359,6 @@
           preview.innerHTML = `<img src="${e.target.result}" alt="Anteprima">`;
         };
         reader.readAsDataURL(file);
-      } else {
-        preview.innerHTML = `<span>${currentUsername ? currentUsername.charAt(0).toUpperCase() : '?'}</span>`;
       }
     }
 
@@ -317,7 +370,6 @@
       err.textContent = '';
 
       try {
-        // Cambio password
         if (newPassword) {
           if (newPassword.length < 6) {
             err.textContent = 'La password deve avere almeno 6 caratteri.';
@@ -328,10 +380,14 @@
             return;
           }
           const user = auth.currentUser;
-          await user.updatePassword(newPassword);
+          if (user.email.endsWith('@fantautenti.fake')) {
+            await user.updatePassword(newPassword);
+          } else {
+            err.textContent = 'Non puoi cambiare la password con un account Google.';
+            return;
+          }
         }
 
-        // Caricamento foto
         const file = fileInput.files[0];
         if (file) {
           const reader = new FileReader();
@@ -341,8 +397,8 @@
             const userData = (await userRef.get()).data();
 
             let pointsToAdd = 0;
-            if (!userData.profilePic) {
-              pointsToAdd = 5; // bonus primo upload
+            if (!userData.profilePic?.startsWith('http')) {
+              pointsToAdd = 5;
             }
 
             await userRef.update({
@@ -350,8 +406,7 @@
               points: firebase.firestore.FieldValue.increment(pointsToAdd)
             });
 
-            renderLeaderboard();
-            alert('✅ Impostazioni e foto salvate!');
+            renderLeader;
           };
           reader.readAsDataURL(file);
           return;
@@ -361,6 +416,16 @@
       } catch (error) {
         err.textContent = 'Errore: ' + (error.message || error.code);
       }
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        document.getElementById('appScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'block';
+        showAuth('login');
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+      });
     }
 
     // ======================
@@ -373,13 +438,16 @@
       document.getElementById('tab-' + tabId).classList.add('active');
     }
 
-    // Listener per autenticazione persistente
+    // Listener persistente
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDoc = await db.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
           const data = userDoc.data();
-          loadApp(user.uid, data.username);
+          loadApp(user.uid, data.username, data.profilePic);
+        } else {
+          // Utente nuovo (es. Google mai visto)
+          await updateLoginAndLoad(user);
         }
       }
     });
