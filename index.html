@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FantaValmalenco - Statistiche</title>
+  <title>FantaValmalenco - Classifica</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; padding:10px; min-height:100vh; }
@@ -22,7 +22,8 @@
       gap: 10px;
     }
     .google-btn:hover { background: #3367D6; }
-    .error { color:#ff6b6b; text-align:center; margin:10px 0; }
+    .error, .info { text-align:center; margin:10px 0; padding:8px; border-radius:6px; }
+    .info { background: rgba(66, 133, 244, 0.2); color: #bbd6f5; }
     .nav-tabs { display:flex; justify-content:center; gap:10px; margin:20px 0; flex-wrap:wrap; }
     .nav-tabs button { width:auto; padding:8px 16px; background:#333; margin:0; }
     .nav-tabs button.active { background:#2196f3; }
@@ -32,6 +33,15 @@
     .avatar { width:40px; height:40px; border-radius:50%; background:#555; display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:10px; }
     .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
     .user-info { display:flex; align-items:center; }
+    .admin-badge {
+      background: linear-gradient(45deg, #ff9800, #ff5722);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
     .logout-btn { background:#f44336; margin-top:20px; }
     .logout-btn:hover { background:#d32f2f; }
     .rules ul { padding-left:20px; margin:15px 0; }
@@ -49,7 +59,7 @@
     <!-- Schermata Autenticazione -->
     <div id="authScreen">
       <h1>🎮 FantaValmalenco</h1>
-      <p style="text-align:center;">Inserisci le tue statistiche e scala la classifica!</p>
+      <p style="text-align:center;">Classifica ufficiale del campionato!</p>
 
       <div id="loginForm">
         <h2>Accedi con Email</h2>
@@ -107,14 +117,16 @@
       <div class="nav-tabs">
         <button onclick="showTab('leaderboard')" id="tab-leaderboard">Classifica</button>
         <button onclick="showTab('rules')" id="tab-rules">Regole</button>
-        <button onclick="showTab('stats')" id="tab-stats">Le mie statistiche</button>
+        <button onclick="showTab('stats')" id="tab-stats">Statistiche</button>
         <button onclick="showTab('settings')" id="tab-settings">Impostazioni</button>
       </div>
 
       <!-- Classifica -->
       <div id="leaderboard" class="tab-content active">
-        <h2>🏆 Classifica Generale</h2>
-        <div id="leaderboardList"></div>
+        <h2>🏆 Classifica Ufficiale</h2>
+        <div id="leaderboardList">
+          <!-- Caricato dinamicamente -->
+        </div>
       </div>
 
       <!-- Regole -->
@@ -129,42 +141,16 @@
             <li><strong>Rigore sbagliato</strong>: -1 punto</li>
             <li><strong>Rigore segnato</strong>: +1 punto</li>
           </ul>
-          <p>Inserisci le tue statistiche nella sezione "Le mie statistiche".</p>
+          <p>Le statistiche sono aggiornate solo dall’amministratore.</p>
         </div>
       </div>
 
       <!-- Statistiche -->
       <div id="stats" class="tab-content">
-        <h2>📊 Le mie statistiche</h2>
-        <div class="stats-grid">
-          <div class="form-group">
-            <label>Gol</label>
-            <input type="number" id="statGol" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label>Assist</label>
-            <input type="number" id="statAssist" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label>Vittorie</label>
-            <input type="number" id="statWin" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label>Gol subiti</label>
-            <input type="number" id="statGolSubiti" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label>Rigori segnati</label>
-            <input type="number" id="statRigSegnati" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label>Rigori sbagliati</label>
-            <input type="number" id="statRigSbagliati" min="0" value="0" />
-          </div>
+        <h2>📊 Statistiche</h2>
+        <div id="statsContent">
+          <!-- Riempito dinamicamente -->
         </div>
-        <button onclick="saveStats()">Salva Statistiche</button>
-        <div id="statsError" class="error"></div>
-        <div id="totalPoints" style="text-align:center; margin-top:15px; font-size:18px;"></div>
       </div>
 
       <!-- Impostazioni -->
@@ -199,7 +185,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // 🔑 Configurazione Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBCp4I-yA-1BhPgr5VU1dVioL4Uel1X8vE",
       authDomain: "fantautenti.firebaseapp.com",
@@ -213,13 +198,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ======================
-    // Autenticazione
-    // ======================
-    function showAuth(type) {
-      document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
-      document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
-    }
+    const ADMIN_EMAIL = "l2010pro.rl@gmail.com";
 
     function calculatePoints(stats) {
       return (
@@ -230,6 +209,16 @@
         (stats.rigSbagliati || 0) * (-1) +
         (stats.rigSegnati || 0) * 1
       );
+    }
+
+    let currentUserData = null;
+
+    // ======================
+    // Autenticazione
+    // ======================
+    function showAuth(type) {
+      document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
     }
 
     async function register() {
@@ -292,7 +281,7 @@
       try {
         const email = username + '@fantautenti.fake';
         const userCredential = await auth.signInWithEmailAndPassword(email, pass);
-        loadAppData(userCredential.user);
+        await loadAppData(userCredential.user);
       } catch (error) {
         err.textContent = 'Username o password errati.';
       }
@@ -330,7 +319,7 @@
             }
           });
         }
-        loadAppData(user);
+        await loadAppData(user);
       } catch (error) {
         if (error.code !== 'auth/popup-closed-by-user') {
           alert('Errore Google: ' + error.message);
@@ -341,14 +330,16 @@
     async function loadAppData(user) {
       const userDoc = await db.collection('users').doc(user.uid).get();
       const data = userDoc.data();
-      currentUid = user.uid;
-      currentUsername = data.username;
+      currentUserData = {
+        uid: user.uid,
+        email: user.email || user.providerData?.[0]?.email || '',
+        ...data
+      };
+
       document.getElementById('currentUser').textContent = data.username;
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
-      renderLeaderboard();
-      showTab('leaderboard');
-
+      
       // Mostra foto
       const preview = document.getElementById('previewContainer');
       if (data.profilePic) {
@@ -356,6 +347,9 @@
       } else {
         preview.innerHTML = `<span>${data.username.charAt(0).toUpperCase()}</span>`;
       }
+
+      renderLeaderboard();
+      showTab('leaderboard');
     }
 
     async function renderLeaderboard() {
@@ -370,11 +364,20 @@
 
       const list = document.getElementById('leaderboardList');
       list.innerHTML = '';
-      users.forEach(user => {
-        const isCurrent = user.uid === currentUid;
+      users.forEach((user, index) => {
+        const isCurrent = user.uid === currentUserData.uid;
+        const isUserAdmin = currentUserData?.email === ADMIN_EMAIL;
         const avatar = user.profilePic 
           ? `<img src="${user.profilePic}" alt="Avatar">`
           : `<span>${user.username.charAt(0).toUpperCase()}</span>`;
+
+        let adminBadge = '';
+        // Controlla se l'utente nella classifica è l'admin (per nome utente o email)
+        // Qui assumiamo che l'admin abbia email specifica, ma possiamo usare anche username
+        // Per sicurezza, controlliamo solo se è il vero admin loggato
+        if (user.username === 'l2010pro-rl' || (currentUserData && currentUserData.email === ADMIN_EMAIL && isCurrent)) {
+          adminBadge = '<span class="admin-badge">🏆 ADMIN</span>';
+        }
 
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
@@ -382,6 +385,7 @@
           <div class="user-info">
             <div class="avatar">${avatar}</div>
             <strong>${user.username} ${isCurrent ? '(Tu)' : ''}</strong>
+            ${adminBadge}
           </div>
           <div><strong>${user.points}</strong> punti</div>
         `;
@@ -390,11 +394,8 @@
     }
 
     // ======================
-    // Statistiche
+    // Statistiche (solo admin)
     // ======================
-    let currentUid = null;
-    let currentUsername = null;
-
     function showTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
@@ -402,21 +403,55 @@
       document.getElementById('tab-' + tabId).classList.add('active');
 
       if (tabId === 'stats') {
-        loadStats();
+        renderStatsTab();
       }
     }
 
-    async function loadStats() {
-      const userDoc = await db.collection('users').doc(currentUid).get();
-      const data = userDoc.data();
-      const s = data.stats || {};
-      document.getElementById('statGol').value = s.gol || 0;
-      document.getElementById('statAssist').value = s.assist || 0;
-      document.getElementById('statWin').value = s.win || 0;
-      document.getElementById('statGolSubiti').value = s.golSubiti || 0;
-      document.getElementById('statRigSegnati').value = s.rigSegnati || 0;
-      document.getElementById('statRigSbagliati').value = s.rigSbagliati || 0;
-      updateTotalPoints();
+    function renderStatsTab() {
+      const content = document.getElementById('statsContent');
+      if (currentUserData && currentUserData.email === ADMIN_EMAIL) {
+        content.innerHTML = `
+          <div class="stats-grid">
+            <div class="form-group">
+              <label>Gol</label>
+              <input type="number" id="statGol" min="0" value="${currentUserData.stats.gol || 0}" />
+            </div>
+            <div class="form-group">
+              <label>Assist</label>
+              <input type="number" id="statAssist" min="0" value="${currentUserData.stats.assist || 0}" />
+            </div>
+            <div class="form-group">
+              <label>Vittorie</label>
+              <input type="number" id="statWin" min="0" value="${currentUserData.stats.win || 0}" />
+            </div>
+            <div class="form-group">
+              <label>Gol subiti</label>
+              <input type="number" id="statGolSubiti" min="0" value="${currentUserData.stats.golSubiti || 0}" />
+            </div>
+            <div class="form-group">
+              <label>Rigori segnati</label>
+              <input type="number" id="statRigSegnati" min="0" value="${currentUserData.stats.rigSegnati || 0}" />
+            </div>
+            <div class="form-group">
+              <label>Rigori sbagliati</label>
+              <input type="number" id="statRigSbagliati" min="0" value="${currentUserData.stats.rigSbagliati || 0}" />
+            </div>
+          </div>
+          <button onclick="saveStats()">Salva Statistiche</button>
+          <div id="statsError" class="error"></div>
+          <div id="totalPoints" style="text-align:center; margin-top:15px; font-size:18px;"></div>
+        `;
+        updateTotalPoints();
+        document.querySelectorAll('#statsContent input').forEach(input => {
+          input.addEventListener('input', updateTotalPoints);
+        });
+      } else {
+        content.innerHTML = `
+          <div class="info">
+            🔒 Solo l'amministratore può aggiornare le statistiche.
+          </div>
+        `;
+      }
     }
 
     function updateTotalPoints() {
@@ -433,6 +468,11 @@
     }
 
     async function saveStats() {
+      if (!currentUserData || currentUserData.email !== ADMIN_EMAIL) {
+        alert('Non sei autorizzato!');
+        return;
+      }
+
       const stats = {
         gol: parseInt(document.getElementById('statGol').value) || 0,
         assist: parseInt(document.getElementById('statAssist').value) || 0,
@@ -443,7 +483,7 @@
       };
 
       try {
-        await db.collection('users').doc(currentUid).update({ stats: stats });
+        await db.collection('users').doc(currentUserData.uid).update({ stats: stats });
         alert('✅ Statistiche salvate!');
         renderLeaderboard();
         updateTotalPoints();
@@ -462,8 +502,7 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           preview.innerHTML = `<img src="${e.target.result}" alt="Anteprima">`;
-          // Salva subito la foto
-          db.collection('users').doc(currentUid).update({ profilePic: e.target.result });
+          db.collection('users').doc(currentUserData.uid).update({ profilePic: e.target.result });
         };
         reader.readAsDataURL(file);
       }
@@ -488,7 +527,6 @@
           const user = auth.currentUser;
           if (user.email.endsWith('@fantautenti.fake')) {
             await user.updatePassword(newPassword);
-            // Aggiorna anche in Firestore se necessario
           } else {
             err.textContent = 'Non puoi cambiare la password con un account Google.';
             return;
@@ -507,6 +545,7 @@
         showAuth('login');
         document.getElementById('loginUser').value = '';
         document.getElementById('loginPass').value = '';
+        currentUserData = null;
       });
     }
 
@@ -514,9 +553,9 @@
       if (user) {
         const userDoc = await db.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
-          loadAppData(user);
+          await loadAppData(user);
         } else {
-          // Dovrebbe già essere gestito, ma per sicurezza
+          // Nuovo utente Google
           const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
           let username = baseUsername;
           let counter = 1;
@@ -541,14 +580,9 @@
               rigSbagliati: 0
             }
           });
-          loadAppData(user);
+          await loadAppData(user);
         }
       }
-    });
-
-    // Aggiorna punti totali in tempo reale
-    document.querySelectorAll('#stats input').forEach(input => {
-      input.addEventListener('input', updateTotalPoints);
     });
   </script>
 </body>
