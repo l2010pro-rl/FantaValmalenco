@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FantaValmalenco - Classifica</title>
+  <title>FantaValmalenco - Admin</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; padding:10px; min-height:100vh; }
@@ -11,8 +11,8 @@
     h1, h2 { text-align:center; color:#4fc3f7; margin:15px 0; }
     .form-group { margin:12px 0; }
     label { display:block; margin:6px 0 4px; font-weight:bold; }
-    input { width:100%; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:white; }
-    input::placeholder { color:#aaa; }
+    input, select { width:100%; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:white; }
+    input::placeholder, select { color:#aaa; }
     button { width:100%; padding:12px; background:#2196f3; color:white; font-weight:bold; border:none; border-radius:6px; cursor:pointer; margin:10px 0; }
     .google-btn {
       background: #4285F4;
@@ -147,7 +147,7 @@
 
       <!-- Statistiche -->
       <div id="stats" class="tab-content">
-        <h2>📊 Statistiche</h2>
+        <h2>📊 Aggiorna Statistiche</h2>
         <div id="statsContent">
           <!-- Riempito dinamicamente -->
         </div>
@@ -212,6 +212,7 @@
     }
 
     let currentUserData = null;
+    let allUsers = [];
 
     // ======================
     // Autenticazione
@@ -340,7 +341,6 @@
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
       
-      // Mostra foto
       const preview = document.getElementById('previewContainer');
       if (data.profilePic) {
         preview.innerHTML = `<img src="${data.profilePic}" alt="Avatar">`;
@@ -348,34 +348,31 @@
         preview.innerHTML = `<span>${data.username.charAt(0).toUpperCase()}</span>`;
       }
 
-      renderLeaderboard();
+      await renderLeaderboard();
       showTab('leaderboard');
     }
 
     async function renderLeaderboard() {
       const snapshot = await db.collection('users').get();
-      const users = [];
+      allUsers = [];
       snapshot.forEach(doc => {
         const data = doc.data();
         const points = calculatePoints(data.stats);
-        users.push({ ...data, uid: doc.id, points });
+        allUsers.push({ ...data, uid: doc.id, points });
       });
-      users.sort((a, b) => b.points - a.points);
+      allUsers.sort((a, b) => b.points - a.points);
 
       const list = document.getElementById('leaderboardList');
       list.innerHTML = '';
-      users.forEach((user, index) => {
+      allUsers.forEach(user => {
         const isCurrent = user.uid === currentUserData.uid;
-        const isUserAdmin = currentUserData?.email === ADMIN_EMAIL;
+        const isAdmin = user.uid === currentUserData.uid && currentUserData.email === ADMIN_EMAIL;
         const avatar = user.profilePic 
           ? `<img src="${user.profilePic}" alt="Avatar">`
           : `<span>${user.username.charAt(0).toUpperCase()}</span>`;
 
         let adminBadge = '';
-        // Controlla se l'utente nella classifica è l'admin (per nome utente o email)
-        // Qui assumiamo che l'admin abbia email specifica, ma possiamo usare anche username
-        // Per sicurezza, controlliamo solo se è il vero admin loggato
-        if (user.username === 'l2010pro-rl' || (currentUserData && currentUserData.email === ADMIN_EMAIL && isCurrent)) {
+        if (isAdmin) {
           adminBadge = '<span class="admin-badge">🏆 ADMIN</span>';
         }
 
@@ -394,7 +391,7 @@
     }
 
     // ======================
-    // Statistiche (solo admin)
+    // Statistiche (solo admin, per qualsiasi utente)
     // ======================
     function showTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -407,50 +404,74 @@
       }
     }
 
-    function renderStatsTab() {
+    async function renderStatsTab() {
       const content = document.getElementById('statsContent');
       if (currentUserData && currentUserData.email === ADMIN_EMAIL) {
+        // Carica lista utenti aggiornata
+        const snapshot = await db.collection('users').get();
+        let usersList = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          usersList += `<option value="${doc.id}">${data.username}</option>`;
+        });
+
         content.innerHTML = `
+          <div class="form-group">
+            <label>Seleziona utente</label>
+            <select id="userSelect">${usersList}</select>
+          </div>
           <div class="stats-grid">
             <div class="form-group">
               <label>Gol</label>
-              <input type="number" id="statGol" min="0" value="${currentUserData.stats.gol || 0}" />
+              <input type="number" id="statGol" min="0" value="0" />
             </div>
             <div class="form-group">
               <label>Assist</label>
-              <input type="number" id="statAssist" min="0" value="${currentUserData.stats.assist || 0}" />
+              <input type="number" id="statAssist" min="0" value="0" />
             </div>
             <div class="form-group">
               <label>Vittorie</label>
-              <input type="number" id="statWin" min="0" value="${currentUserData.stats.win || 0}" />
+              <input type="number" id="statWin" min="0" value="0" />
             </div>
             <div class="form-group">
               <label>Gol subiti</label>
-              <input type="number" id="statGolSubiti" min="0" value="${currentUserData.stats.golSubiti || 0}" />
+              <input type="number" id="statGolSubiti" min="0" value="0" />
             </div>
             <div class="form-group">
               <label>Rigori segnati</label>
-              <input type="number" id="statRigSegnati" min="0" value="${currentUserData.stats.rigSegnati || 0}" />
+              <input type="number" id="statRigSegnati" min="0" value="0" />
             </div>
             <div class="form-group">
               <label>Rigori sbagliati</label>
-              <input type="number" id="statRigSbagliati" min="0" value="${currentUserData.stats.rigSbagliati || 0}" />
+              <input type="number" id="statRigSbagliati" min="0" value="0" />
             </div>
           </div>
           <button onclick="saveStats()">Salva Statistiche</button>
           <div id="statsError" class="error"></div>
           <div id="totalPoints" style="text-align:center; margin-top:15px; font-size:18px;"></div>
         `;
-        updateTotalPoints();
-        document.querySelectorAll('#statsContent input').forEach(input => {
-          input.addEventListener('input', updateTotalPoints);
-        });
+        document.getElementById('userSelect').addEventListener('change', loadUserStats);
+        loadUserStats(); // Carica stats del primo utente
       } else {
         content.innerHTML = `
           <div class="info">
             🔒 Solo l'amministratore può aggiornare le statistiche.
           </div>
         `;
+      }
+    }
+
+    async function loadUserStats() {
+      const userId = document.getElementById('userSelect').value;
+      const user = allUsers.find(u => u.uid === userId);
+      if (user) {
+        document.getElementById('statGol').value = user.stats.gol || 0;
+        document.getElementById('statAssist').value = user.stats.assist || 0;
+        document.getElementById('statWin').value = user.stats.win || 0;
+        document.getElementById('statGolSubiti').value = user.stats.golSubiti || 0;
+        document.getElementById('statRigSegnati').value = user.stats.rigSegnati || 0;
+        document.getElementById('statRigSbagliati').value = user.stats.rigSbagliati || 0;
+        updateTotalPoints();
       }
     }
 
@@ -473,6 +494,7 @@
         return;
       }
 
+      const userId = document.getElementById('userSelect').value;
       const stats = {
         gol: parseInt(document.getElementById('statGol').value) || 0,
         assist: parseInt(document.getElementById('statAssist').value) || 0,
@@ -483,9 +505,9 @@
       };
 
       try {
-        await db.collection('users').doc(currentUserData.uid).update({ stats: stats });
-        alert('✅ Statistiche salvate!');
-        renderLeaderboard();
+        await db.collection('users').doc(userId).update({ stats: stats });
+        alert('✅ Statistiche salvate per l’utente selezionato!');
+        await renderLeaderboard();
         updateTotalPoints();
       } catch (error) {
         document.getElementById('statsError').textContent = 'Errore: ' + error.message;
@@ -502,7 +524,9 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           preview.innerHTML = `<img src="${e.target.result}" alt="Anteprima">`;
-          db.collection('users').doc(currentUserData.uid).update({ profilePic: e.target.result });
+          if (currentUserData) {
+            db.collection('users').doc(currentUserData.uid).update({ profilePic: e.target.result });
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -546,6 +570,7 @@
         document.getElementById('loginUser').value = '';
         document.getElementById('loginPass').value = '';
         currentUserData = null;
+        allUsers = [];
       });
     }
 
@@ -555,7 +580,6 @@
         if (userDoc.exists) {
           await loadAppData(user);
         } else {
-          // Nuovo utente Google
           const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
           let username = baseUsername;
           let counter = 1;
@@ -582,6 +606,13 @@
           });
           await loadAppData(user);
         }
+      }
+    });
+
+    // Aggiorna punti quando si modificano i campi
+    document.addEventListener('input', function(e) {
+      if (e.target.id && e.target.id.startsWith('stat')) {
+        updateTotalPoints();
       }
     });
   </script>
