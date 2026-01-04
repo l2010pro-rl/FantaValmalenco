@@ -1,181 +1,319 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" id="htmlRoot">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FantaValmalenco - Admin</title>
-  <style>
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f2027">
+  
+  <style id="themeStyles">
+    /* ===== TEMA SCURO (DEFAULT) ===== */
+    .theme-dark {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+    }
+    .theme-dark .container,
+    .theme-dark .sidebar,
+    .theme-dark #publicProfile {
+      background: rgba(0,0,0,0.85);
+    }
+    .theme-dark input, .theme-dark select, .theme-dark textarea {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    /* ===== TEMA CHIARO ===== */
+    .theme-light {
+      background: linear-gradient(135deg, #e0f7fa, #bbdefb, #90caf9);
+      color: #222;
+    }
+    .theme-light .container,
+    .theme-light .sidebar,
+    .theme-light #publicProfile {
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .theme-light input, .theme-light select, .theme-light textarea {
+      background: white;
+      color: #222;
+      border: 1px solid #ccc;
+    }
+
+    /* ===== TEMA BLU NOTTE ===== */
+    .theme-blue {
+      background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
+      color: #e0e1dd;
+    }
+    .theme-blue .container,
+    .theme-blue .sidebar,
+    .theme-blue #publicProfile {
+      background: rgba(13,27,42,0.85);
+    }
+    .theme-blue input, .theme-blue select, .theme-blue textarea {
+      background: rgba(255,255,255,0.1);
+      color: #e0e1dd;
+    }
+
+    /* ===== STILI CONDIVISI ===== */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color:white; padding:10px; min-height:100vh; }
-    .container { max-width:800px; margin:0 auto; background:rgba(0,0,0,0.85); padding:20px; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.6); }
-    h1, h2 { text-align:center; color:#4fc3f7; margin:15px 0; }
+    body { min-height:100vh; display: flex; flex-direction: column; }
+    .sidebar { width:220px; padding:20px 0; display:flex; flex-direction:column; gap:10px; box-shadow:4px 0 10px rgba(0,0,0,0.3); z-index:10; }
+    .sidebar h2 { text-align:center; margin-bottom:15px; font-size:18px; }
+    .sidebar button { width:90%; margin:0 auto; padding:10px; border:none; border-radius:6px; cursor:pointer; text-align:center; position:relative; }
+    .unread-badge { position:absolute; top:4px; right:8px; background:#f44336; color:white; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; }
+    .main-content { flex:1; padding:10px; width:100%; }
+    .container { max-width:800px; margin:0 auto; padding:20px; border-radius:12px; position:relative; width:100%; }
+    .menu-toggle-btn { display:none; position:absolute; top:20px; left:15px; background:transparent; border:none; font-size:24px; cursor:pointer; z-index:20; }
+    h1 { text-align:center; margin:15px 0 5px; }
     .form-group { margin:12px 0; }
     label { display:block; margin:6px 0 4px; font-weight:bold; }
-    input, select { width:100%; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:white; }
-    input::placeholder, select { color:#aaa; }
-    button { width:100%; padding:12px; background:#2196f3; color:white; font-weight:bold; border:none; border-radius:6px; cursor:pointer; margin:10px 0; }
-    .google-btn {
-      background: #4285F4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .google-btn:hover { background: #3367D6; }
+    input, select, textarea { width:100%; padding:10px; border-radius:6px; }
+    button.full { width:100%; padding:12px; font-weight:bold; border:none; border-radius:6px; cursor:pointer; margin:10px 0; }
+    .google-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; margin:10px 0; }
     .error, .info { text-align:center; margin:10px 0; padding:8px; border-radius:6px; }
-    .info { background: rgba(66, 133, 244, 0.2); color: #bbd6f5; }
-    .nav-tabs { display:flex; justify-content:center; gap:10px; margin:20px 0; flex-wrap:wrap; }
-    .nav-tabs button { width:auto; padding:8px 16px; background:#333; margin:0; }
-    .nav-tabs button.active { background:#2196f3; }
     .tab-content { display:none; }
     .tab-content.active { display:block; }
-    .leaderboard-item { display:flex; justify-content:space-between; padding:12px; margin:8px 0; background:rgba(255,255,255,0.1); border-radius:8px; align-items:center; }
-    .avatar { width:40px; height:40px; border-radius:50%; background:#555; display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:10px; }
+    .leaderboard-item { display:flex; justify-content:space-between; padding:12px; margin:8px 0; border-radius:8px; align-items:center; }
+    .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:10px; }
     .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
     .user-info { display:flex; align-items:center; }
-    .admin-badge {
-      background: linear-gradient(45deg, #ff9800, #ff5722);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-left: 8px;
-    }
-    .logout-btn { background:#f44336; margin-top:20px; }
-    .logout-btn:hover { background:#d32f2f; }
+    .admin-badge { padding:2px 8px; border-radius:12px; font-size:12px; font-weight:bold; margin-left:8px; }
+    .role-tag { padding:2px 6px; border-radius:6px; font-size:11px; margin-left:6px; }
+    .badge { width:18px; height:18px; margin-left:6px; font-size:12px; text-align:center; display:inline-block; }
+    .logout-btn { margin-top:20px; width:100%; padding:12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
     .rules ul { padding-left:20px; margin:15px 0; }
     .rules li { margin:8px 0; }
-    .preview { width:100px; height:100px; border-radius:50%; margin:10px auto; background:#444; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .preview { width:100px; height:100px; border-radius:50%; margin:10px auto; display:flex; align-items:center; justify-content:center; overflow:hidden; }
     .preview img { width:100%; height:100%; object-fit:cover; }
-    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    @media (max-width: 600px) {
-      .stats-grid { grid-template-columns: 1fr; }
+    #chatMessages { height:300px; overflow-y:auto; padding:10px; border-radius:8px; margin-bottom:10px; display:flex; flex-direction:column; }
+    .chat-message { padding:8px 12px; border-radius:8px; margin-bottom:8px; max-width:80%; word-wrap:break-word; }
+    .chat-message.system { background: rgba(255,193,7,0.2); color: #ff9800; }
+    .chat-message.self { background: rgba(76,175,80,0.2); color: #a5d6a7; }
+    .chat-header { font-weight:bold; margin-bottom:4px; font-size:14px; }
+    .chat-text { font-size:15px; }
+    .chat-time { font-size:11px; opacity:0.7; text-align:right; margin-top:4px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .theme-toggle { position:absolute; top:20px; right:15px; background:transparent; border:none; font-size:20px; cursor:pointer; z-index:20; }
+    
+    /* Annunci ed eventi */
+    .announcement-banner, .event-banner {
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .announcement-banner { background: #ff9800; color: #000; }
+    .event-banner { background: #e91e63; color: white; }
+    
+    /* Toast notifications */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    .toast {
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      max-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: fadeInOut 3s forwards;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-10px); }
+      10% { opacity: 1; transform: translateY(0); }
+      90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
+    }
+
+    /* Profilo pubblico */
+    #publicProfile {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    #publicProfile a {
+      color: #4fc3f7;
+      text-decoration: none;
+    }
+
+    @media (max-width: 767px) {
+      body { flex-direction:column; padding:0; }
+      .sidebar { position:fixed; top:0; left:-220px; height:100vh; transition:left 0.3s ease; z-index:100; }
+      .sidebar.active { left:0; }
+      .menu-toggle-btn { display:block; }
+      .main-content { margin-top:60px; }
+      .stats-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <!-- Schermata Autenticazione -->
-    <div id="authScreen">
-      <h1>🎮 FantaValmalenco</h1>
-      <p style="text-align:center;">Classifica ufficiale del campionato!</p>
+<body id="bodyRoot" class="theme-dark">
+  <!-- Toast container -->
+  <div id="toastContainer"></div>
 
-      <div id="loginForm">
-        <h2>Accedi con Email</h2>
-        <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="loginUser" placeholder="Il tuo username" />
+  <!-- Profilo pubblico (se presente) -->
+  <div id="publicProfile" style="display:none;"></div>
+
+  <!-- App normale -->
+  <aside class="sidebar" id="sidebar" style="display:none;">
+    <h2>Menu</h2>
+    <button onclick="showTab('leaderboard')" id="tab-leaderboard">Classifica</button>
+    <button onclick="showTab('rules')" id="tab-rules">Regole</button>
+    <button onclick="showTab('achievements')" id="tab-achievements">Trofei</button>
+    <button onclick="showTab('team')" id="tab-team">
+      Team
+      <span class="unread-badge" id="unreadBadge" style="display:none;">!</span>
+    </button>
+    <button onclick="showTab('settings')" id="tab-settings">Impostazioni</button>
+  </aside>
+
+  <div class="main-content" id="mainContent" style="display:none;">
+    <button class="menu-toggle-btn" id="menuToggle">☰</button>
+    <button class="theme-toggle" id="themeToggle">🎨</button>
+
+    <div class="container">
+      <!-- Annunci ed eventi -->
+      <div id="announcementBanner" class="announcement-banner" style="display:none;"></div>
+      <div id="eventBanner" class="event-banner" style="display:none;"></div>
+
+      <!-- Schermata Autenticazione -->
+      <div id="authScreen">
+        <h1>🎮 FantaValmalenco</h1>
+        <p style="text-align:center;">Classifica ufficiale del campionato!</p>
+
+        <div id="loginForm">
+          <h2>Accedi con Email</h2>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="loginUser" placeholder="Il tuo username" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPass" placeholder="La tua password" />
+          </div>
+          <button class="full" onclick="loginEmail()">Accedi</button>
+          <p style="text-align:center; margin:10px 0;">
+            Non hai un account? <a href="#" onclick="showAuth('register')" style="color:#4fc3f7;">Registrati</a>
+          </p>
+          <div id="loginError" class="error"></div>
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="loginPass" placeholder="La tua password" />
-        </div>
-        <button onclick="loginEmail()">Accedi</button>
-        <p style="text-align:center; margin:10px 0;">
-          Non hai un account? <a href="#" onclick="showAuth('register')" style="color:#4fc3f7;">Registrati</a>
-        </p>
-        <div id="loginError" class="error"></div>
-      </div>
 
-      <button class="google-btn" onclick="loginGoogle()">
-        <svg width="20" height="20" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
-          <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 34.944-56.639 34.944-97.93z" fill="#4285F4"/>
-          <path d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.053-45.257 13.053-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1z" fill="#34A853"/>
-          <path d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.01 89.644 0 109.517 0 130.55s5.01 40.905 13.94 58.602l42.341-32.782z" fill="#FBBC05"/>
-          <path d="M130.55 50.479c24.513 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.944 165.798 0 130.55 0 79.49 0 35.393 29.301 13.94 50.76l42.341 32.782c10.873-33.37 42.378-57.871 76.27-57.871z" fill="#EA4335"/>
-        </svg>
-        Accedi con Google
-      </button>
+        <button class="google-btn" onclick="loginGoogle()">
+          <svg width="20" height="20" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
+            <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 34.944-56.639 34.944-97.93z" fill="#4285F4"/>
+            <path d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.053-45.257 13.053-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1z" fill="#34A853"/>
+            <path d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.01 89.644 0 109.517 0 130.55s5.01 40.905 13.94 58.602l42.341-32.782z" fill="#FBBC05"/>
+            <path d="M130.55 50.479c24.513 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.944 165.798 0 130.55 0 79.49 0 35.393 29.301 13.94 50.76l42.341 32.782c10.873-33.37 42.378-57.871 76.27-57.871z" fill="#EA4335"/>
+          </svg>
+          Accedi con Google
+        </button>
 
-      <div id="registerForm" style="display:none;">
-        <h2>Registrati</h2>
-        <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="regUser" placeholder="Scegli username unico" />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="regPass" placeholder="Minimo 6 caratteri" />
-        </div>
-        <div class="form-group">
-          <label>Conferma Password</label>
-          <input type="password" id="regPass2" placeholder="Ripeti password" />
-        </div>
-        <button onclick="register()">Registrati</button>
-        <p style="text-align:center; margin-top:10px;">
-          Hai già un account? <a href="#" onclick="showAuth('login')" style="color:#4fc3f7;">Accedi</a>
-        </p>
-        <div id="regError" class="error"></div>
-      </div>
-    </div>
-
-    <!-- App Principale -->
-    <div id="appScreen" style="display:none;">
-      <h1>Benvenuto, <span id="currentUser"></span>!</h1>
-
-      <div class="nav-tabs">
-        <button onclick="showTab('leaderboard')" id="tab-leaderboard">Classifica</button>
-        <button onclick="showTab('rules')" id="tab-rules">Regole</button>
-        <button onclick="showTab('stats')" id="tab-stats">Statistiche</button>
-        <button onclick="showTab('settings')" id="tab-settings">Impostazioni</button>
-      </div>
-
-      <!-- Classifica -->
-      <div id="leaderboard" class="tab-content active">
-        <h2>🏆 Classifica Ufficiale</h2>
-        <div id="leaderboardList">
-          <!-- Caricato dinamicamente -->
-        </div>
-      </div>
-
-      <!-- Regole -->
-      <div id="rules" class="tab-content">
-        <h2>📜 Regolamento Punti</h2>
-        <div class="rules">
-          <ul>
-            <li><strong>Gol</strong>: +2 punti</li>
-            <li><strong>Assist</strong>: +1 punto</li>
-            <li><strong>Vittoria</strong>: +1 punto</li>
-            <li><strong>Gol subito</strong>: -1 punto</li>
-            <li><strong>Rigore sbagliato</strong>: -1 punto</li>
-            <li><strong>Rigore segnato</strong>: +1 punto</li>
-          </ul>
-          <p>Le statistiche sono aggiornate solo dall’amministratore.</p>
+        <div id="registerForm" style="display:none;">
+          <h2>Registrati</h2>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="regUser" placeholder="Scegli username unico" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="regPass" placeholder="Minimo 6 caratteri" />
+          </div>
+          <div class="form-group">
+            <label>Conferma Password</label>
+            <input type="password" id="regPass2" placeholder="Ripeti password" />
+          </div>
+          <button class="full" onclick="register()">Registrati</button>
+          <p style="text-align:center; margin-top:10px;">
+            Hai già un account? <a href="#" onclick="showAuth('login')" style="color:#4fc3f7;">Accedi</a>
+          </p>
+          <div id="regError" class="error"></div>
         </div>
       </div>
 
-      <!-- Statistiche -->
-      <div id="stats" class="tab-content">
-        <h2>📊 Aggiorna Statistiche</h2>
-        <div id="statsContent">
-          <!-- Riempito dinamicamente -->
-        </div>
-      </div>
+      <!-- App Principale -->
+      <div id="appScreen" style="display:none;">
+        <h1>Benvenuto, <span id="currentUser"></span>!</h1>
 
-      <!-- Impostazioni -->
-      <div id="settings" class="tab-content">
-        <h2>⚙️ Impostazioni Profilo</h2>
-        <div class="form-group">
-          <label>Nuova Password</label>
-          <input type="password" id="newPassword" placeholder="Lascia vuoto per non cambiare" />
+        <!-- Classifica -->
+        <div id="leaderboard" class="tab-content active">
+          <h2>🏆 Classifica Ufficiale</h2>
+          <div id="leaderboardList"></div>
         </div>
-        <div class="form-group">
-          <label>Conferma Nuova Password</label>
-          <input type="password" id="newPassword2" placeholder="Ripeti la nuova password" />
-        </div>
-        <div class="form-group">
-          <label>Foto Profilo</label>
-          <input type="file" id="profilePic" accept="image/*" onchange="previewImage(event)" />
-          <div class="preview" id="previewContainer">
-            <span>?</span>
+
+        <!-- Regole -->
+        <div id="rules" class="tab-content">
+          <h2>📜 Regolamento Punti</h2>
+          <div class="rules">
+            <ul>
+              <li><strong>Gol</strong>: +2 punti</li>
+              <li><strong>Assist</strong>: +1 punto</li>
+              <li><strong>Vittoria</strong>: +1 punto</li>
+              <li><strong>Gol subito</strong>: -1 punto</li>
+              <li><strong>Rigore sbagliato</strong>: -1 punto</li>
+              <li><strong>Rigore segnato</strong>: +1 punto</li>
+            </ul>
+            <p>Le statistiche sono aggiornate solo dall’amministratore.</p>
           </div>
         </div>
-        <button onclick="saveSettings()">Salva Impostazioni</button>
-        <div id="settingsError" class="error"></div>
-      </div>
 
-      <button class="logout-btn" onclick="logout()">Esci</button>
+        <!-- Trofei -->
+        <div id="achievements" class="tab-content">
+          <h2>🏆 I Tuoi Trofei</h2>
+          <div id="achievementsContent"></div>
+        </div>
+
+        <!-- Statistiche (solo admin) -->
+        <div id="stats" class="tab-content">
+          <h2>📊 Aggiorna Statistiche</h2>
+          <div id="statsContent"></div>
+          <button class="full csv-btn" id="exportCsvBtn" onclick="exportToCSV()">Esporta CSV</button>
+        </div>
+
+        <!-- Team Chat -->
+        <div id="team" class="tab-content">
+          <h2>💬 Team Chat</h2>
+          <div id="chatMessages"></div>
+          <div class="form-group">
+            <label>Il tuo messaggio</label>
+            <textarea id="messageInput" placeholder="Scrivi un messaggio per il team... Usa /help per i comandi" rows="2"></textarea>
+          </div>
+          <button class="full" onclick="sendMessage()">Invia Messaggio</button>
+          <div id="chatError" class="error"></div>
+        </div>
+
+        <!-- Impostazioni -->
+        <div id="settings" class="tab-content">
+          <h2>⚙️ Impostazioni Profilo</h2>
+          <div class="form-group">
+            <label>Nuova Password</label>
+            <input type="password" id="newPassword" placeholder="Lascia vuoto per non cambiare" />
+          </div>
+          <div class="form-group">
+            <label>Conferma Nuova Password</label>
+            <input type="password" id="newPassword2" placeholder="Ripeti la nuova password" />
+          </div>
+          <div class="form-group">
+            <label>Foto Profilo</label>
+            <input type="file" id="profilePic" accept="image/*" onchange="previewImage(event)" />
+            <div class="preview" id="previewContainer">
+              <span>?</span>
+            </div>
+          </div>
+          <button class="full" onclick="saveSettings()">Salva Impostazioni</button>
+          <div id="settingsError" class="error"></div>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Esci</button>
+      </div>
     </div>
   </div>
 
@@ -185,6 +323,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
+    // 🔑 Sostituisci con la tua API key di Google AI (Gemini)
+    const GEMINI_API_KEY = 'TUA_API_KEY_QUI'; 
+
     const firebaseConfig = {
       apiKey: "AIzaSyBCp4I-yA-1BhPgr5VU1dVioL4Uel1X8vE",
       authDomain: "fantautenti.firebaseapp.com",
@@ -199,7 +340,196 @@
     const db = firebase.firestore();
 
     const ADMIN_EMAIL = "l2010pro.rl@gmail.com";
+    let adminUid = null;
+    let currentUserData = null;
+    let allUsers = [];
+    let previousRankings = new Map();
+    let unsubscribeMessages = null;
+    let achievementsChecked = false;
 
+    // ===== NOTIFICHE IN-APP =====
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.background = type === 'warn' ? 'rgba(255,193,7,0.9)' : 'rgba(0,0,0,0.8)';
+      toast.textContent = message;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ===== TEMA =====
+    function applyTheme(theme) {
+      const body = document.getElementById('bodyRoot');
+      body.className = `theme-${theme}`;
+      localStorage.setItem('theme', theme);
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      applyTheme(saved);
+      document.getElementById('themeToggle').onclick = () => {
+        const current = localStorage.getItem('theme') || 'dark';
+        const next = current === 'dark' ? 'light' : current === 'light' ? 'blue' : 'dark';
+        applyTheme(next);
+      };
+    }
+
+    // ===== COMANDI CHAT =====
+    async function handleCommand(text) {
+      if (!currentUserData) return null;
+
+      if (text === '/help') {
+        return `Comandi disponibili:\n/rank - Vedi la classifica\n/point - Vedi i tuoi punti\n/teme[nr] — Cambia tema (1=Scuro, 2=Chiaro, 3=Blu)\n/ai [domanda] - Chiedi consigli all'AI\n/help - Questo messaggio`;
+      }
+      if (text === '/rank') {
+        const top3 = allUsers.slice(0, 3).map((u, i) => `${i+1}. ${u.username}: ${u.points} punti`).join('\n');
+        return `🏆 Top 3:\n${top3}\n\nTu: posizione ${allUsers.findIndex(u => u.uid === currentUserData.uid) + 1}`;
+      }
+      if (text === '/point') {
+        const points = calculatePoints(currentUserData.stats || {});
+        return `I tuoi punti: ${points}`;
+      }
+      if (text.startsWith('/teme')) {
+        const num = text.replace('/teme', '');
+        let theme = '';
+        let themeName = '';
+        if (num === '1') {
+          theme = 'dark';
+          themeName = 'Scuro';
+        } else if (num === '2') {
+          theme = 'light';
+          themeName = 'Chiaro';
+        } else if (num === '3') {
+          theme = 'blue';
+          themeName = 'Blu';
+        }
+        if (theme) {
+          applyTheme(theme);
+          return `🎨 Tema cambiato in: ${themeName}`;
+        } else {
+          return `❌ Usa /teme1, /teme2 o /teme3\n/teme1 = Scuro (default)\n/teme2 = Chiaro\n/teme3 = Blu notte`;
+        }
+      }
+      if (text.startsWith('/ai ')) {
+        const prompt = text.replace('/ai ', '');
+        return await handleAICommand(prompt);
+      }
+      return null;
+    }
+
+    // ===== AI CON GEMINI =====
+    async function handleAICommand(prompt) {
+      if (!GEMINI_API_KEY || GEMINI_API_KEY === 'TUA_API_KEY_QUI') {
+        return "⚠️ AI non configurata. Contatta l'admin.";
+      }
+
+      const userStats = currentUserData.stats || {};
+      const context = `
+        Ruolo: ${currentUserData.role}
+        Punti totali: ${calculatePoints(userStats)}
+        Statistiche: Gol=${userStats.gol || 0}, Assist=${userStats.assist || 0}, Vittorie=${userStats.win || 0}
+      `;
+
+      const query = `Sei un esperto di fantacalcio. Analizza questi dati e rispondi in modo breve, utile e divertente:\nDati: ${context}\nDomanda: ${prompt}`;
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: query }] }]
+          })
+        });
+
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "🤔 Non ho capito...";
+      } catch (e) {
+        return "⚠️ Servizio AI temporaneamente non disponibile.";
+      }
+    }
+
+    // ===== TROFEI =====
+    async function checkAchievements() {
+      if (!currentUserData || achievementsChecked) return;
+      achievementsChecked = true;
+
+      const userRef = db.collection('users').doc(currentUserData.uid);
+      const achievements = currentUserData.achievements || {};
+
+      // Esempio: "Comandante" - 20 comandi
+      const commandCount = parseInt(localStorage.getItem('commandCount') || '0');
+      if (commandCount >= 20 && !achievements.commander) {
+        await userRef.update({ 'achievements.commander': true });
+        showToast('🏆 Trofeo sbloccato: "Comandante"!', 'info');
+        return;
+      }
+
+      // Aggiungi altri trofei qui
+    }
+
+    function renderAchievements() {
+      const achievements = currentUserData?.achievements || {};
+      let html = '';
+      
+      const list = {
+        commander: '🤖 Comandante — Hai usato 20 comandi!',
+        // Aggiungi altri trofei
+      };
+
+      for (const [key, desc] of Object.entries(list)) {
+        html += `<div style="margin:10px 0; padding:10px; background:rgba(255,255,255,0.1); border-radius:8px; opacity:${achievements[key] ? 1 : 0.4}">${desc}</div>`;
+      }
+      
+      if (!html) html = "<p>Nessun trofeo sbloccato. Usa i comandi in chat!</p>";
+      document.getElementById('achievementsContent').innerHTML = html;
+    }
+
+    // ===== ANNUNCI ED EVENTI =====
+    function initAnnouncements() {
+      // Annunci ufficiali
+      db.collection('config').doc('announcement').onSnapshot(doc => {
+        const el = document.getElementById('announcementBanner');
+        if (doc.exists && doc.data().active) {
+          el.textContent = "📢 " + doc.data().text;
+          el.style.display = 'block';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+
+      // Eventi speciali
+      db.collection('events').doc('current').onSnapshot(doc => {
+        const el = document.getElementById('eventBanner');
+        if (doc.exists && doc.data().active) {
+          el.textContent = "🎉 EVENTO: " + doc.data().description;
+          el.style.display = 'block';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+
+    // ===== PROFILO PUBBLICO =====
+    async function loadPublicProfile(uid) {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (!userDoc.exists) {
+        document.getElementById('publicProfile').innerHTML = '<h1>Utente non trovato</h1>';
+        return;
+      }
+      
+      const data = userDoc.data();
+      const points = calculatePoints(data.stats || {});
+      document.getElementById('publicProfile').innerHTML = `
+        <h1>Profilo di ${data.username}</h1>
+        <h2>${points} punti</h2>
+        <p><strong>Ruolo:</strong> ${data.role || 'N/A'}</p>
+        <p><strong>Classifica:</strong> ${allUsers.findIndex(u => u.uid === uid) + 1}°</p>
+        <a href="/">Torna alla classifica</a>
+      `;
+      document.getElementById('publicProfile').style.display = 'block';
+    }
+
+    // ===== LOGICA PRINCIPALE =====
     function calculatePoints(stats) {
       return (
         (stats.gol || 0) * 2 +
@@ -211,16 +541,12 @@
       );
     }
 
-    let currentUserData = null;
-    let allUsers = [];
-
-    // ======================
-    // Autenticazione
-    // ======================
     function showAuth(type) {
       document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
       document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
     }
+
+    // ... (funzioni register, loginEmail, loginGoogle identiche) ...
 
     async function register() {
       const username = document.getElementById('regUser').value.trim();
@@ -248,14 +574,8 @@
         await db.collection('users').doc(userCredential.user.uid).set({
           username: username,
           profilePic: null,
-          stats: {
-            gol: 0,
-            assist: 0,
-            win: 0,
-            golSubiti: 0,
-            rigSegnati: 0,
-            rigSbagliati: 0
-          }
+          role: "attaccante",
+          stats: { gol: 0, assist: 0, win: 0, golSubiti: 0, rigSegnati: 0, rigSbagliati: 0 }
         });
         alert('✅ Registrazione completata!');
         showAuth('login');
@@ -310,14 +630,8 @@
           await db.collection('users').doc(user.uid).set({
             username: username,
             profilePic: user.photoURL || null,
-            stats: {
-              gol: 0,
-              assist: 0,
-              win: 0,
-              golSubiti: 0,
-              rigSegnati: 0,
-              rigSbagliati: 0
-            }
+            role: "attaccante",
+            stats: { gol: 0, assist: 0, win: 0, golSubiti: 0, rigSegnati: 0, rigSbagliati: 0 }
           });
         }
         await loadAppData(user);
@@ -331,11 +645,23 @@
     async function loadAppData(user) {
       const userDoc = await db.collection('users').doc(user.uid).get();
       const data = userDoc.data();
-      currentUserData = {
-        uid: user.uid,
-        email: user.email || user.providerData?.[0]?.email || '',
-        ...data
-      };
+
+      if (user.email === ADMIN_EMAIL) {
+        adminUid = user.uid;
+        db.collection('users').doc(user.uid).update({ isAdmin: true }).catch(() => {});
+        // Aggiungi bottone Statistiche
+        if (!document.getElementById('statsBtn')) {
+          const btn = document.createElement('button');
+          btn.id = 'statsBtn';
+          btn.textContent = 'Statistiche';
+          btn.onclick = () => showTab('stats');
+          const teamBtn = document.getElementById('tab-team');
+          document.querySelector('.sidebar').insertBefore(btn, teamBtn);
+        }
+      }
+
+      currentUserData = { uid: user.uid, email: user.email, ...data };
+      await db.collection('users').doc(user.uid).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
 
       document.getElementById('currentUser').textContent = data.username;
       document.getElementById('authScreen').style.display = 'none';
@@ -350,6 +676,25 @@
 
       await renderLeaderboard();
       showTab('leaderboard');
+      startListeningToMessages();
+      initTheme();
+      initAnnouncements();
+      renderAchievements();
+      checkAchievements();
+    }
+
+    // ===== CLASSIFICA =====
+    function getBadges(user, rank) {
+      const badges = [];
+      const stats = user.stats || {};
+      if (rank === 0) badges.push('🥇');
+      if (stats.gol >= 10) badges.push('⚽');
+      if (user.role === 'portiere' && stats.golSubiti === 0) badges.push('🧤');
+      if (user.role === 'attaccante' && stats.gol >= 5) badges.push('💥');
+      const currentPoints = calculatePoints(stats);
+      const lastPoints = user.lastPoints || 0;
+      if (currentPoints - lastPoints >= 5) badges.push('📈');
+      return badges.map(b => `<span class="badge">${b}</span>`).join('');
     }
 
     async function renderLeaderboard() {
@@ -361,20 +706,17 @@
         allUsers.push({ ...data, uid: doc.id, points });
       });
       allUsers.sort((a, b) => b.points - a.points);
+      checkRankingChanges();
 
       const list = document.getElementById('leaderboardList');
       list.innerHTML = '';
-      allUsers.forEach(user => {
-        const isCurrent = user.uid === currentUserData.uid;
-        const isAdmin = user.uid === currentUserData.uid && currentUserData.email === ADMIN_EMAIL;
-        const avatar = user.profilePic 
-          ? `<img src="${user.profilePic}" alt="Avatar">`
-          : `<span>${user.username.charAt(0).toUpperCase()}</span>`;
-
-        let adminBadge = '';
-        if (isAdmin) {
-          adminBadge = '<span class="admin-badge">🏆 ADMIN</span>';
-        }
+      allUsers.forEach((user, index) => {
+        const isCurrent = currentUserData && user.uid === currentUserData.uid;
+        const isAdmin = user.uid === adminUid;
+        const badgesHtml = getBadges(user, index);
+        const roleTag = user.role ? `<span class="role-tag">${user.role}</span>` : '';
+        const avatar = user.profilePic ? `<img src="${user.profilePic}" alt="Avatar">` : `<span>${user.username.charAt(0).toUpperCase()}</span>`;
+        let adminBadge = isAdmin ? '<span class="admin-badge">🏆 ADMIN</span>' : '';
 
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
@@ -382,7 +724,9 @@
           <div class="user-info">
             <div class="avatar">${avatar}</div>
             <strong>${user.username} ${isCurrent ? '(Tu)' : ''}</strong>
+            ${roleTag}
             ${adminBadge}
+            ${badgesHtml}
           </div>
           <div><strong>${user.points}</strong> punti</div>
         `;
@@ -390,75 +734,254 @@
       });
     }
 
-    // ======================
-    // Statistiche (solo admin, per qualsiasi utente)
-    // ======================
+    function checkRankingChanges() {
+      if (!currentUserData) return;
+      const currentRankings = new Map();
+      allUsers.forEach((user, index) => currentRankings.set(user.uid, index));
+      const myUid = currentUserData.uid;
+      const myNewRank = currentRankings.get(myUid);
+      const myOldRank = previousRankings.get(myUid);
+      if (myOldRank !== undefined && myNewRank > myOldRank) {
+        const who = allUsers[myNewRank - 1]?.username || 'qualcuno';
+        showToast(`⚠️ Sei stato superato da ${who}! Ora sei ${myNewRank + 1}° (eri ${myOldRank + 1}°)`, 'warn');
+      }
+      previousRankings = currentRankings;
+    }
+
+    // ===== NAVIGAZIONE =====
     function showTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      document.getElementById('tab-' + tabId).classList.add('active');
+      document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId)?.classList.add('active');
+      const btn = document.getElementById('tab-' + tabId) || document.getElementById('statsBtn');
+      if (btn) btn.classList.add('active');
+      if (window.innerWidth <= 767) document.getElementById('sidebar').classList.remove('active');
+      if (tabId === 'team') setTimeout(() => document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight, 100);
+      if (tabId === 'achievements') renderAchievements();
+    }
 
-      if (tabId === 'stats') {
-        renderStatsTab();
+    // ===== GESTIONE MENU MOBILE =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('menuToggle');
+      const sidebar = document.getElementById('sidebar');
+      if (menuToggle) {
+        menuToggle.addEventListener('click', e => {
+          e.stopPropagation();
+          sidebar.classList.toggle('active');
+        });
+        document.addEventListener('click', e => {
+          if (window.innerWidth <= 767 && sidebar.classList.contains('active') && !sidebar.contains(e.target) && e.target !== menuToggle) {
+            sidebar.classList.remove('active');
+          }
+        });
+      }
+    });
+
+    // ===== CHAT =====
+    function startListeningToMessages() {
+      const chatMessages = document.getElementById('chatMessages');
+      chatMessages.innerHTML = '<div style="text-align:center; opacity:0.7;">Caricamento messaggi...</div>';
+
+      if (unsubscribeMessages) unsubscribeMessages();
+
+      db.collection('messages').onSnapshot(() => checkUnreadMessages());
+
+      unsubscribeMessages = db.collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot(snapshot => {
+          chatMessages.innerHTML = '';
+          snapshot.forEach(doc => {
+            const msg = doc.data();
+            const isSystem = msg.uid === 'system';
+            const isSelf = msg.uid === currentUserData?.uid;
+            const time = new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+
+            const msgEl = document.createElement('div');
+            msgEl.className = `chat-message ${isSystem ? 'system' : isSelf ? 'self' : ''}`;
+            msgEl.innerHTML = `
+              <div class="chat-header">${isSystem ? '📢 Sistema' : msg.username}</div>
+              <div class="chat-text">${msg.text}</div>
+              <div class="chat-time">${time}</div>
+            `;
+            if (!msg.isCommandResponse || isSelf) {
+              chatMessages.appendChild(msgEl);
+            }
+          });
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+
+          if (currentUserData) {
+            db.collection('users').doc(currentUserData.uid).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
+          }
+        }, error => {
+          chatMessages.innerHTML = `<div class="error">Errore: ${error.message}</div>`;
+        });
+    }
+
+    async function checkUnreadMessages() {
+      if (!currentUserData) return;
+      const userDoc = await db.collection('users').doc(currentUserData.uid).get();
+      const lastSeen = userDoc.data()?.lastSeen?.toDate();
+      if (!lastSeen) return;
+
+      const messages = await db.collection('messages')
+        .where('timestamp', '>', firebase.firestore.Timestamp.fromDate(lastSeen))
+        .where('isCommandResponse', '==', false)
+        .get();
+
+      const badge = document.getElementById('unreadBadge');
+      badge.style.display = messages.size > 0 ? 'flex' : 'none';
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      let text = input.value.trim();
+      const err = document.getElementById('chatError');
+      err.textContent = '';
+
+      if (!text) {
+        err.textContent = 'Inserisci un messaggio.';
+        return;
+      }
+
+      if (!currentUserData) {
+        err.textContent = 'Devi essere autenticato.';
+        return;
+      }
+
+      const commandResponse = await handleCommand(text);
+      if (commandResponse) {
+        // Traccia comandi per trofei
+        let count = parseInt(localStorage.getItem('commandCount') || '0');
+        localStorage.setItem('commandCount', String(count + 1));
+        
+        await db.collection('messages').add({
+          uid: currentUserData.uid,
+          username: 'Tu',
+          text: commandResponse,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          isCommandResponse: true
+        });
+        input.value = '';
+        return;
+      }
+
+      try {
+        await db.collection('messages').add({
+          uid: currentUserData.uid,
+          username: currentUserData.username,
+          text: text,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          isCommandResponse: false
+        });
+        input.value = '';
+      } catch (error) {
+        err.textContent = 'Errore: ' + error.message;
       }
     }
 
-    async function renderStatsTab() {
-      const content = document.getElementById('statsContent');
-      if (currentUserData && currentUserData.email === ADMIN_EMAIL) {
-        // Carica lista utenti aggiornata
-        const snapshot = await db.collection('users').get();
-        let usersList = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          usersList += `<option value="${doc.id}">${data.username}</option>`;
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('messageInput');
+      if (input) {
+        input.addEventListener('keypress', e => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
         });
-
-        content.innerHTML = `
-          <div class="form-group">
-            <label>Seleziona utente</label>
-            <select id="userSelect">${usersList}</select>
-          </div>
-          <div class="stats-grid">
-            <div class="form-group">
-              <label>Gol</label>
-              <input type="number" id="statGol" min="0" value="0" />
-            </div>
-            <div class="form-group">
-              <label>Assist</label>
-              <input type="number" id="statAssist" min="0" value="0" />
-            </div>
-            <div class="form-group">
-              <label>Vittorie</label>
-              <input type="number" id="statWin" min="0" value="0" />
-            </div>
-            <div class="form-group">
-              <label>Gol subiti</label>
-              <input type="number" id="statGolSubiti" min="0" value="0" />
-            </div>
-            <div class="form-group">
-              <label>Rigori segnati</label>
-              <input type="number" id="statRigSegnati" min="0" value="0" />
-            </div>
-            <div class="form-group">
-              <label>Rigori sbagliati</label>
-              <input type="number" id="statRigSbagliati" min="0" value="0" />
-            </div>
-          </div>
-          <button onclick="saveStats()">Salva Statistiche</button>
-          <div id="statsError" class="error"></div>
-          <div id="totalPoints" style="text-align:center; margin-top:15px; font-size:18px;"></div>
-        `;
-        document.getElementById('userSelect').addEventListener('change', loadUserStats);
-        loadUserStats(); // Carica stats del primo utente
-      } else {
-        content.innerHTML = `
-          <div class="info">
-            🔒 Solo l'amministratore può aggiornare le statistiche.
-          </div>
-        `;
       }
+    });
+
+    // ===== STATISTICHE (SOLO ADMIN) =====
+    async function renderStatsTab() {
+      if (!currentUserData || currentUserData.uid !== adminUid) {
+        showTab('leaderboard');
+        return;
+      }
+
+      const content = document.getElementById('statsContent');
+      const snapshot = await db.collection('users').get();
+      let usersList = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        usersList += `<option value="${doc.id}">${data.username} (${data.role || 'nessuno'})</option>`;
+      });
+
+      content.innerHTML = `
+        <div class="form-group">
+          <label>Seleziona utente</label>
+          <select id="userSelect">${usersList}</select>
+        </div>
+        <div class="form-group">
+          <label>Ruolo</label>
+          <select id="userRole">
+            <option value="portiere">Portiere</option>
+            <option value="difensore">Difensore</option>
+            <option value="attaccante">Attaccante</option>
+          </select>
+        </div>
+        <div class="stats-grid">
+          <div class="form-group">
+            <label>Gol</label>
+            <input type="number" id="statGol" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Assist</label>
+            <input type="number" id="statAssist" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Vittorie</label>
+            <input type="number" id="statWin" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Gol subiti</label>
+            <input type="number" id="statGolSubiti" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Rigori segnati</label>
+            <input type="number" id="statRigSegnati" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Rigori sbagliati</label>
+            <input type="number" id="statRigSbagliati" min="0" value="0" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Annuncio Ufficiale</label>
+          <textarea id="adminAnnouncement" placeholder="Lascia vuoto per rimuovere"></textarea>
+          <button class="full" onclick="setAnnouncement()">Salva Annuncio</button>
+        </div>
+        <div class="form-group">
+          <label>Evento Speciale</label>
+          <textarea id="adminEvent" placeholder="Lascia vuoto per rimuovere"></textarea>
+          <button class="full" onclick="setEvent()">Salva Evento</button>
+        </div>
+        <button class="full" onclick="saveStats()">Salva Statistiche</button>
+        <div id="statsError" class="error"></div>
+        <div id="totalPoints" style="text-align:center; margin-top:15px; font-size:18px;"></div>
+      `;
+      document.getElementById('userSelect').addEventListener('change', loadUserStats);
+      loadUserStats();
+    }
+
+    // ===== FUNZIONI ADMIN PER ANNUNCI ED EVENTI =====
+    async function setAnnouncement() {
+      if (!currentUserData || currentUserData.uid !== adminUid) return;
+      const text = document.getElementById('adminAnnouncement').value.trim();
+      await db.collection('config').doc('announcement').set({
+        text,
+        active: text !== '',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    async function setEvent() {
+      if (!currentUserData || currentUserData.uid !== adminUid) return;
+      const description = document.getElementById('adminEvent').value.trim();
+      await db.collection('events').doc('current').set({
+        description,
+        active: description !== '',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
     }
 
     async function loadUserStats() {
@@ -471,6 +994,7 @@
         document.getElementById('statGolSubiti').value = user.stats.golSubiti || 0;
         document.getElementById('statRigSegnati').value = user.stats.rigSegnati || 0;
         document.getElementById('statRigSbagliati').value = user.stats.rigSbagliati || 0;
+        document.getElementById('userRole').value = user.role || 'attaccante';
         updateTotalPoints();
       }
     }
@@ -489,12 +1013,13 @@
     }
 
     async function saveStats() {
-      if (!currentUserData || currentUserData.email !== ADMIN_EMAIL) {
+      if (!currentUserData || currentUserData.uid !== adminUid) {
         alert('Non sei autorizzato!');
         return;
       }
 
       const userId = document.getElementById('userSelect').value;
+      const role = document.getElementById('userRole').value;
       const stats = {
         gol: parseInt(document.getElementById('statGol').value) || 0,
         assist: parseInt(document.getElementById('statAssist').value) || 0,
@@ -505,8 +1030,15 @@
       };
 
       try {
-        await db.collection('users').doc(userId).update({ stats: stats });
-        alert('✅ Statistiche salvate per l’utente selezionato!');
+        await db.collection('users').doc(userId).update({ stats: stats, role: role });
+        await db.collection('messages').add({
+          uid: 'system',
+          username: 'Sistema',
+          text: '📊 Statistiche aggiornate dall\'amministratore!',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          isCommandResponse: false
+        });
+        alert('✅ Statistiche, ruolo, annuncio ed evento salvati!');
         await renderLeaderboard();
         updateTotalPoints();
       } catch (error) {
@@ -514,15 +1046,30 @@
       }
     }
 
-    // ======================
-    // Impostazioni
-    // ======================
+    // ===== CSV, IMPOSTAZIONI, LOGOUT =====
+    function exportToCSV() {
+      if (!currentUserData || currentUserData.uid !== adminUid) return;
+      let csv = 'Username,Ruolo,Punti,Gol,Assist,Vittorie,GolSubiti,RigSegnati,RigSbagliati\n';
+      allUsers.forEach(user => {
+        const s = user.stats || {};
+        csv += `"${user.username}",${user.role || 'nessuno'},${user.points},${s.gol || 0},${s.assist || 0},${s.win || 0},${s.golSubiti || 0},${s.rigSegnati || 0},${s.rigSbagliati || 0}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fanta-valmalenco-classifica.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
     function previewImage(event) {
       const file = event.target.files[0];
       const preview = document.getElementById('previewContainer');
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = e => {
           preview.innerHTML = `<img src="${e.target.result}" alt="Anteprima">`;
           if (currentUserData) {
             db.collection('users').doc(currentUserData.uid).update({ profilePic: e.target.result });
@@ -563,58 +1110,95 @@
     }
 
     function logout() {
-      auth.signOut().then(() => {
-        document.getElementById('appScreen').style.display = 'none';
-        document.getElementById('authScreen').style.display = 'block';
-        showAuth('login');
-        document.getElementById('loginUser').value = '';
-        document.getElementById('loginPass').value = '';
-        currentUserData = null;
-        allUsers = [];
-      });
+      if (unsubscribeMessages) unsubscribeMessages();
+      const statsBtn = document.getElementById('statsBtn');
+      if (statsBtn) statsBtn.remove();
+      document.getElementById('appScreen').style.display = 'none';
+      document.getElementById('authScreen').style.display = 'block';
+      showAuth('login');
+      document.getElementById('loginUser').value = '';
+      document.getElementById('loginPass').value = '';
+      currentUserData = null;
+      allUsers = [];
+      adminUid = null;
+      previousRankings.clear();
+      achievementsChecked = false;
     }
 
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-          await loadAppData(user);
-        } else {
-          const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
-          let username = baseUsername;
-          let counter = 1;
-          let exists = true;
-          while (exists) {
-            const snapshot = await db.collection('users').where('username', '==', username).get();
-            exists = !snapshot.empty;
-            if (exists) {
-              username = baseUsername + counter;
-              counter++;
-            }
-          }
-          await db.collection('users').doc(user.uid).set({
-            username: username,
-            profilePic: user.photoURL || null,
-            stats: {
-              gol: 0,
-              assist: 0,
-              win: 0,
-              golSubiti: 0,
-              rigSegnati: 0,
-              rigSbagliati: 0
-            }
-          });
-          await loadAppData(user);
-        }
-      }
-    });
+    // ===== AVVIO DELL'APPLICAZIONE =====
+    (async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const publicUserId = urlParams.get('user');
 
-    // Aggiorna punti quando si modificano i campi
-    document.addEventListener('input', function(e) {
+      if (publicUserId) {
+        // Modalità profilo pubblico
+        document.getElementById('sidebar').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+        await loadPublicProfile(publicUserId);
+      } else {
+        // Modalità normale
+        document.getElementById('sidebar').style.display = 'block';
+        document.getElementById('mainContent').style.display = 'block';
+        initTheme();
+        initAnnouncements();
+
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+              await loadAppData(user);
+            } else {
+              const baseUsername = user.displayName?.replace(/\s+/g, '') || 'utente' + Math.floor(Math.random() * 1000);
+              let username = baseUsername;
+              let counter = 1;
+              let exists = true;
+              while (exists) {
+                const snapshot = await db.collection('users').where('username', '==', username).get();
+                exists = !snapshot.empty;
+                if (exists) {
+                  username = baseUsername + counter;
+                  counter++;
+                }
+              }
+              await db.collection('users').doc(user.uid).set({
+                username: username,
+                profilePic: user.photoURL || null,
+                role: "attaccante",
+                stats: { gol: 0, assist: 0, win: 0, golSubiti: 0, rigSegnati: 0, rigSbagliati: 0 }
+              });
+              await loadAppData(user);
+            }
+          } else {
+            if (unsubscribeMessages) unsubscribeMessages();
+            const statsBtn = document.getElementById('statsBtn');
+            if (statsBtn) statsBtn.remove();
+            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'block';
+            showAuth('login');
+            currentUserData = null;
+            allUsers = [];
+            adminUid = null;
+            previousRankings.clear();
+            achievementsChecked = false;
+          }
+        });
+      }
+    })();
+
+    document.addEventListener('input', e => {
       if (e.target.id && e.target.id.startsWith('stat')) {
         updateTotalPoints();
       }
     });
+  </script>
+
+  <!-- Service Worker per PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+      });
+    }
   </script>
 </body>
 </html>
